@@ -1,38 +1,50 @@
 # ============================================================================
-# CODEX-PLATFORM Docker Compose
+# codex-platform — single-host SOC integration stack
 # ============================================================================
-# Start:   docker compose up -d
-# Stop:    docker compose down
-# Logs:    docker compose logs -f [service]
-# Status:  docker compose ps
+# Usage:
+#   cp .env.example .env
+#   docker compose up -d --build
+#   docker compose down
 #
-# Pinned versions — do not change without testing all services together.
+# Services bind to 127.0.0.1 only by design.
 # ============================================================================
 
 services:
-  # --- MQTT Broker ---
-  mosquitto:
-    image: eclipse-mosquitto:2.0.20
-    container_name: codex-mosquitto
+  receiver:
+    build:
+      context: ./receiver
+      dockerfile: Dockerfile
+    container_name: codex-receiver
     restart: unless-stopped
     ports:
-      - "${CODEX_MQTT_PORT}:1883"
+      - "127.0.0.1:${CODEX_RECEIVER_PORT}:${CODEX_RECEIVER_PORT}"
+    environment:
+      CODEX_RECEIVER_BIND: ${CODEX_RECEIVER_BIND}
+      CODEX_RECEIVER_PORT: ${CODEX_RECEIVER_PORT}
+      CODEX_SQLITE_DB: ${CODEX_SQLITE_DB}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${CODEX_REDIS_PASS}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
     volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
+      - ./sqlite:/data
+    depends_on:
+      redis:
+        condition: service_healthy
     networks:
       - codex-net
     healthcheck:
-      test: ["CMD-SHELL", "mosquitto_pub -t test -n -h localhost -u ${CODEX_MQTT_USER} -P ${CODEX_MQTT_PASS} || exit 1"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:' + str(${CODEX_RECEIVER_PORT}) + '/health', timeout=2)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
-  # --- Redis (hot event store) ---
   redis:
     image: redis:7.4-alpine
     container_name: codex-redis
     restart: unless-stopped
     ports:
-      - "${CODEX_REDIS_PORT}:6379"
+      - "127.0.0.1:${CODEX_REDIS_PORT}:6379"
     volumes:
       - ./redis-data:/data
     command: >
@@ -51,56 +63,52 @@ services:
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${CODEX_REDIS_PASS}", "ping"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
 
-  # --- n8n (workflow orchestration) ---
+  grafana:
+    image: grafana/grafana-oss:11.4.0
+    container_name: codex-grafana
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "127.0.0.1:${CODEX_GRAFANA_PORT}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${CODEX_GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${CODEX_GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_INSTALL_PLUGINS: frser-sqlite-datasource
+    volumes:
+      - ./grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./sqlite:/sqlite:ro
+    depends_on:
+      receiver:
+        condition: service_started
+    networks:
+      - codex-net
+
   n8n:
     image: n8nio/n8n:1.76.1
     container_name: codex-n8n
     restart: unless-stopped
+    profiles:
+      - n8n
     ports:
-      - "${CODEX_N8N_PORT}:5678"
+      - "127.0.0.1:${CODEX_N8N_PORT}:5678"
     environment:
-      - N8N_DIAGNOSTICS_ENABLED=false
-      - GENERIC_TIMEZONE=Europe/Paris
-      - TZ=Europe/Paris
-      # n8n stores workflows in SQLite by default in ~/.n8n
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      GENERIC_TIMEZONE: Europe/Paris
+      TZ: Europe/Paris
     volumes:
       - ./n8n-data:/home/node/.n8n
-      - ./sqlite:/home/node/sqlite
-
+    depends_on:
+      receiver:
+        condition: service_started
     networks:
       - codex-net
-    depends_on:
-      mosquitto:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  # --- Grafana (dashboards) ---
-  grafana:
-    image: grafana/grafana-oss:11.4.0
-    container_name: codex-grafana
-    user: "1000:1000"
-    restart: unless-stopped
-    ports:
-      - "${CODEX_GRAFANA_PORT}:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=${CODEX_GRAFANA_ADMIN_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${CODEX_GRAFANA_ADMIN_PASSWORD}
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_AUTH_ANONYMOUS_ENABLED=false
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
-    volumes:
-      - ./grafana-data:/var/lib/grafana
-      - ./sqlite:/var/lib/grafana/sqlite
-
-    networks:
-      - codex-net
-    depends_on:
-      redis:
-        condition: service_healthy
 
 networks:
   codex-net:
