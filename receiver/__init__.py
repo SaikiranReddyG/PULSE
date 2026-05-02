@@ -1,0 +1,1 @@
+"""Receiver package for codex-platform."""
