@@ -36,8 +36,8 @@ smoke:
 test:
 	cd receiver && python -m pytest ../tests/ -v
 dashboard:
-	@command -v codex-dashboard >/dev/null 2>&1 || (echo "codex-dashboard not installed. Run: cd dashboard && python3 -m venv .venv && .venv/bin/pip install -e ." && exit 1)
-	codex-dashboard
+	@command -v codex-dashboard >/dev/null 2>&1 || (echo "Installing dashboard from venv..." && cd dashboard && .venv/bin/pip install -q -e . && cd ..)
+	dashboard/.venv/bin/codex-dashboard
 
 clean:
 	$(DOCKER_COMPOSE) down -v
