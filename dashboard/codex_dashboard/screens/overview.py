@@ -5,6 +5,7 @@ from __future__ import annotations
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widget import Widget
+from textual.widgets import Static
 
 from codex_dashboard.storage import Storage
 from codex_dashboard.widgets.header_strip import HeaderStrip
@@ -15,12 +16,18 @@ from codex_dashboard.widgets.events_table import RecentEventsTable
 
 
 class OverviewScreen(Widget):
-    """Overview tab: header + sparkline + breakdown bars + events table."""
-
     DEFAULT_CSS = """
     OverviewScreen {
         layout: vertical;
-        background: $background;
+    }
+    OverviewScreen #top-row {
+        height: auto;
+    }
+    OverviewScreen #middle-row {
+        height: 12;
+    }
+    OverviewScreen #bottom-row {
+        height: 1fr;
     }
     """
 
@@ -29,16 +36,20 @@ class OverviewScreen(Widget):
         self.storage = storage
 
     def compose(self) -> ComposeResult:
-        yield HeaderStrip(self.storage)
-        yield EventsSparkline(self.storage)
-        yield SeverityBar(self.storage)
-        yield SourceBar(self.storage)
-        yield RecentEventsTable(self.storage)
+        with Container(id="top-row"):
+            yield HeaderStrip(self.storage, id="header-strip")
+        with Horizontal(id="middle-row"):
+            yield EventsSparkline(self.storage, id="sparkline")
+            yield SeverityBar(self.storage, id="severity-bar")
+            yield SourceBar(self.storage, id="source-bar")
+        with Container(id="bottom-row"):
+            yield RecentEventsTable(self.storage, id="events-table")
 
-    def refresh_data(self):
-        """Refresh all child widgets."""
-        for child in self.query("*"):
-            if hasattr(child, "refresh_data"):
-                child.refresh_data()
-            else:
-                child.update("")  # Trigger re-render
+    def refresh_data(self) -> None:
+        for child_id in ["header-strip", "sparkline", "severity-bar", "source-bar", "events-table"]:
+            try:
+                w = self.query_one(f"#{child_id}")
+            except Exception:
+                continue
+            if hasattr(w, "refresh_data"):
+                w.refresh_data()

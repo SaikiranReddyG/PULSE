@@ -27,6 +27,6 @@ SEVERITY_COLOR = {
 # Source colors (for the source-breakdown bar — neutral, distinct)
 SOURCE_COLOR = {
     "syswatch": "#5fafaf",    # teal
-    "sentinel": "#d7af5f",    # warm yellow
+    "sentinel": "#af87d7",    # muted purple
     "netlab": "#87af5f",      # muted green
 }

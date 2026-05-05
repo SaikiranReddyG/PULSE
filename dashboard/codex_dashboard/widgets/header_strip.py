@@ -1,7 +1,5 @@
 """Header strip — total events, events/min, source counts."""
 
-from __future__ import annotations
-
 from textual.widget import Widget
 from textual.widgets import Static
 
@@ -9,36 +7,39 @@ from codex_dashboard.storage import Storage
 
 
 class HeaderStrip(Widget):
-    """Display summary metrics at the top of Overview tab."""
-
     DEFAULT_CSS = """
     HeaderStrip {
         height: 3;
-        border: round $border;
-        background: $surface;
+        padding: 0 1;
+    }
+    HeaderStrip Static {
+        height: 3;
     }
     """
 
     def __init__(self, storage: Storage, **kwargs):
         super().__init__(**kwargs)
         self.storage = storage
+        self._content = Static("", id="header-strip-content")
 
-    def render(self) -> str:
-        """Render the header strip with live data."""
+    def compose(self):
+        yield self._content
+
+    def on_mount(self) -> None:
+        self.refresh_data()
+
+    def refresh_data(self) -> None:
         if not self.storage.is_available():
-            return "[dim]Database unavailable[/dim]"
-
+            self._content.update("[#d75f5f]database unavailable[/]")
+            return
         total = self.storage.total_events()
-        recent = self.storage.events_in_window(60)
-
+        last_min = self.storage.events_in_window(1)
+        last_hour = self.storage.events_in_window(60)
         sources = self.storage.source_counts(60)
-        source_str = " • ".join(
-            f"{src.title()}: {sources.get(src, 0)}"
-            for src in ["sentinel", "syswatch", "netlab"]
-        )
-
-        return (
-            f"[bold #5fafd7]Events[/bold #5fafd7] Total: {total}  "
-            f"Last 60m: {recent}\n"
-            f"[dim]{source_str}[/dim]"
+        src_str = "   ".join(f"[#888888]{k}:[/] {v}" for k, v in sorted(sources.items()))
+        self._content.update(
+            f"[bold #5fafd7]Total[/] {total}    "
+            f"[bold #5fafd7]Last 1m[/] {last_min}    "
+            f"[bold #5fafd7]Last 1h[/] {last_hour}\n"
+            f"{src_str}"
         )

@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import asyncio
-
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
-from textual.widgets import Footer, Header, Static, TabbedContent, TabPane
+from textual.widgets import Footer, Header, TabbedContent, TabPane, Static
 
 from codex_dashboard.storage import Storage
 from codex_dashboard.screens.overview import OverviewScreen
@@ -23,52 +21,67 @@ class CodexDashboardApp(App):
     """Terminal dashboard for codex-platform."""
 
     CSS_PATH = "styles.tcss"
+    TITLE = "codex"
+    SUB_TITLE = "platform dashboard"
 
     BINDINGS = [
-        Binding("q", "quit", "Quit", show=True),
-        Binding("r", "refresh", "Refresh", show=True),
-        Binding("1", "tab(0)", "Overview", show=False),
-        Binding("2", "tab(1)", "Syswatch", show=False),
-        Binding("3", "tab(2)", "Sentinel", show=False),
-        Binding("4", "tab(3)", "Netlab", show=False),
+        Binding("q", "quit", "Quit", priority=True),
+        Binding("r", "refresh", "Refresh", priority=True),
+        Binding("1", "switch_tab('overview')", "Overview"),
+        Binding("2", "switch_tab('syswatch')", "syswatch"),
+        Binding("3", "switch_tab('sentinel')", "sentinel"),
+        Binding("4", "switch_tab('netlab')", "netlab"),
     ]
 
-    TITLE = "codex"
-
-    def __init__(self, db_path: str = "", **kwargs):
-        super().__init__(**kwargs)
-        self.db_path = db_path
+    def __init__(self, db_path: str):
+        super().__init__()
         self.storage = Storage(db_path)
+        self._db_path = db_path
 
     def compose(self) -> ComposeResult:
-        yield Header()
-        with TabbedContent():
-            with TabPane("Overview"):
-                yield OverviewScreen(self.storage)
-            with TabPane("Syswatch"):
-                yield SyswatchScreen(self.storage)
-            with TabPane("Sentinel"):
-                yield SentinelScreen(self.storage)
-            with TabPane("Netlab"):
-                yield NetlabScreen(self.storage)
+        yield Header(show_clock=True)
+        with TabbedContent(initial="overview"):
+            with TabPane("Overview", id="overview"):
+                yield OverviewScreen(self.storage, id="overview-screen")
+            with TabPane("syswatch", id="syswatch"):
+                yield SyswatchScreen(self.storage, id="syswatch-screen")
+            with TabPane("sentinel", id="sentinel"):
+                yield SentinelScreen(self.storage, id="sentinel-screen")
+            with TabPane("netlab", id="netlab"):
+                yield NetlabScreen(self.storage, id="netlab-screen")
+        yield Static("", id="status-bar")
         yield Footer()
 
     def on_mount(self) -> None:
-        """Start periodic refresh task."""
-        self.set_interval(REFRESH_INTERVAL_SECONDS, self.action_refresh)
+        self._refresh_status_bar()
+        self.set_interval(REFRESH_INTERVAL_SECONDS, self._tick)
 
-    def action_tab(self, index: int) -> None:
-        """Switch to a tab by index (0-3)."""
-        self.query_one(TabbedContent).active = index
+    def _tick(self) -> None:
+        self._refresh_all_screens()
+        self._refresh_status_bar()
+
+    def _refresh_all_screens(self) -> None:
+        for screen in self.query("OverviewScreen, SyswatchScreen, SentinelScreen, NetlabScreen"):
+            if hasattr(screen, "refresh_data"):
+                screen.refresh_data()
+
+    def _refresh_status_bar(self) -> None:
+        bar = self.query_one("#status-bar", Static)
+        if not self.storage.is_available():
+            bar.update(f"[red]✗ database unavailable: {self._db_path}[/]")
+            return
+        total = self.storage.total_events()
+        recent = self.storage.events_in_window(5)
+        bar.update(
+            f"[green]●[/] db OK  "
+            f"[white]events:[/] {total}  "
+            f"[white]last 5min:[/] {recent}  "
+            f"[dim]q: quit  r: refresh  1-4: tabs[/]"
+        )
 
     def action_refresh(self) -> None:
-        """Force a refresh of all data."""
-        # Trigger re-render of Overview widgets
-        overview = self.query_one(OverviewScreen, expect_type=OverviewScreen)
-        if overview:
-            overview.refresh_data()
+        self._tick()
 
-
-if __name__ == "__main__":
-    app = CodexDashboardApp()
-    app.run()
+    def action_switch_tab(self, tab_id: str) -> None:
+        tabs = self.query_one(TabbedContent)
+        tabs.active = tab_id

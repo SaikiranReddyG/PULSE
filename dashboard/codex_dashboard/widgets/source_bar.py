@@ -1,7 +1,5 @@
 """Source breakdown — horizontal bar by source."""
 
-from __future__ import annotations
-
 from textual.widget import Widget
 from textual.widgets import Static
 
@@ -10,31 +8,34 @@ from codex_dashboard.theme import SOURCE_COLOR
 
 
 class SourceBar(Widget):
-    """Display event count breakdown by source."""
-
     DEFAULT_CSS = """
     SourceBar {
-        height: 3;
-        border: round $border;
+        border: round #333333;
+        padding: 1 2;
     }
     """
 
     def __init__(self, storage: Storage, **kwargs):
         super().__init__(**kwargs)
         self.storage = storage
+        self._content = Static("")
 
-    def render(self) -> str:
-        """Render source breakdown with colors."""
-        if not self.storage.is_available():
-            return "[dim]No data[/dim]"
+    def compose(self):
+        yield self._content
 
+    def on_mount(self) -> None:
+        self.refresh_data()
+
+    def refresh_data(self) -> None:
         counts = self.storage.source_counts(60)
-
-        # Build source line with colors
-        parts = ["[bold #5fafd7]Source (last 60m)[/bold #5fafd7]\n"]
-        for src in ["syswatch", "sentinel", "netlab"]:
-            count = counts.get(src, 0)
-            color = SOURCE_COLOR.get(src, "#888888")
-            parts.append(f"[{color}]{src.title():10}[/{color}]: {count} ")
-
-        return "".join(parts)
+        if not counts:
+            self._content.update("[bold #5fafd7]Source (last 60m)[/]\n  [#888888]no events[/]")
+            return
+        lines = ["[bold #5fafd7]Source (last 60m)[/]"]
+        max_n = max(counts.values()) if counts else 1
+        for source, n in sorted(counts.items()):
+            color = SOURCE_COLOR.get(source, "#e8e8e8")
+            bar_width = int((n / max_n) * 20) if max_n else 0
+            bar = "█" * bar_width if bar_width else ""
+            lines.append(f"  [{color}]{source:<10}[/] {bar:<20} {n}")
+        self._content.update("\n".join(lines))

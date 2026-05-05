@@ -1,64 +1,60 @@
 """Recent events table for the Overview tab — last 50 events, color-coded by severity."""
 
-from __future__ import annotations
-
 from textual.widget import Widget
-from textual.widgets import DataTable, Static
+from textual.widgets import DataTable
 
 from codex_dashboard.storage import Storage
 from codex_dashboard.theme import SEVERITY_COLOR
 
 
 class RecentEventsTable(Widget):
-    """Display a table of recent events, color-coded by severity."""
-
     DEFAULT_CSS = """
     RecentEventsTable {
+        border: round #333333;
+        padding: 0 1;
+    }
+    RecentEventsTable DataTable {
         height: 1fr;
-        border: round $border;
     }
     """
 
     def __init__(self, storage: Storage, **kwargs):
         super().__init__(**kwargs)
         self.storage = storage
-        self.table = DataTable()
+        self._table = DataTable(zebra_stripes=True, cursor_type="row")
 
     def compose(self):
-        """Create the data table widget."""
-        yield self.table
+        yield self._table
 
-    def on_mount(self):
-        """Initialize table columns and load data."""
-        self.table.add_columns(
-            "ID", "Timestamp", "Source", "Type", "Severity", "Payload"
-        )
+    def on_mount(self) -> None:
+        self._table.add_columns("Time", "Source", "Event Type", "Severity", "Summary")
         self.refresh_data()
 
-    def refresh_data(self):
-        """Load recent events from storage."""
-        self.table.clear()
-        if not self.storage.is_available():
-            return
-
+    def refresh_data(self) -> None:
         events = self.storage.recent_events(limit=50)
-        for event in events:
-            ts = event.timestamp.strftime("%H:%M:%S")
-            payload_key = next(iter(event.payload.keys())) if event.payload else "—"
-            payload_val = event.payload.get(payload_key, "—")
-            if isinstance(payload_val, (dict, list)):
-                payload_str = "…"
-            else:
-                payload_str = str(payload_val)[:20]
-
-            color = SEVERITY_COLOR.get(event.severity, "#888888")
-            sev_colored = f"[{color}]{event.severity}[/{color}]"
-
-            self.table.add_row(
-                str(event.id),
-                ts,
-                event.source,
-                event.event_type,
-                sev_colored,
-                payload_str,
+        self._table.clear()
+        if not events:
+            self._table.add_row("—", "—", "—", "—", "no events yet")
+            return
+        for e in events:
+            sev_color = SEVERITY_COLOR.get(e.severity, "#e8e8e8")
+            summary = self._summarize_payload(e.payload)
+            self._table.add_row(
+                e.timestamp[11:19],  # HH:MM:SS
+                e.source,
+                e.event_type,
+                f"[{sev_color}]{e.severity}[/]",
+                summary,
             )
+
+    @staticmethod
+    def _summarize_payload(payload: dict) -> str:
+        # Pick first 2-3 informative keys, ignore long lists/dicts
+        if not isinstance(payload, dict) or not payload:
+            return "—"
+        parts = []
+        for k, v in list(payload.items())[:3]:
+            if isinstance(v, (list, dict)):
+                continue
+            parts.append(f"{k}={v}")
+        return " ".join(parts) if parts else "—"

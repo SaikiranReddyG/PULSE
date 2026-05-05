@@ -36,7 +36,7 @@ Tab.-active {
 
 .panel {
     border: round #333333;
-    padding: 1;
+    padding: 1 2;
     margin: 1;
 }
 
@@ -66,6 +66,7 @@ DataTable > .datatable--cursor {
 #status-bar {
     background: #222222;
     color: #888888;
+    padding: 0 1;
     height: 1;
 }
 

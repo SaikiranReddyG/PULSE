@@ -1,7 +1,5 @@
 """Severity breakdown — horizontal bar with per-severity counts and colors."""
 
-from __future__ import annotations
-
 from textual.widget import Widget
 from textual.widgets import Static
 
@@ -10,31 +8,36 @@ from codex_dashboard.theme import SEVERITY_COLOR
 
 
 class SeverityBar(Widget):
-    """Display event count breakdown by severity."""
-
     DEFAULT_CSS = """
     SeverityBar {
-        height: 3;
-        border: round $border;
+        border: round #333333;
+        padding: 1 2;
     }
     """
 
     def __init__(self, storage: Storage, **kwargs):
         super().__init__(**kwargs)
         self.storage = storage
+        self._content = Static("")
 
-    def render(self) -> str:
-        """Render severity breakdown with color coding."""
-        if not self.storage.is_available():
-            return "[dim]No data[/dim]"
+    def compose(self):
+        yield self._content
 
+    def on_mount(self) -> None:
+        self.refresh_data()
+
+    def refresh_data(self) -> None:
         counts = self.storage.severity_counts(60)
-
-        # Build severity line with colors
-        parts = ["[bold #5fafd7]Severity (last 60m)[/bold #5fafd7]\n"]
-        for sev in ["critical", "high", "medium", "low", "info"]:
-            count = counts.get(sev, 0)
-            color = SEVERITY_COLOR.get(sev, "#888888")
-            parts.append(f"[{color}]{sev.title():8}[/{color}]: {count} ")
-
-        return "".join(parts)
+        if not counts:
+            self._content.update("[bold #5fafd7]Severity (last 60m)[/]\n  [#888888]no events[/]")
+            return
+        order = ["info", "low", "medium", "high", "critical"]
+        lines = ["[bold #5fafd7]Severity (last 60m)[/]"]
+        max_n = max(counts.values()) if counts else 1
+        for sev in order:
+            n = counts.get(sev, 0)
+            color = SEVERITY_COLOR.get(sev, "#e8e8e8")
+            bar_width = int((n / max_n) * 20) if max_n else 0
+            bar = "█" * bar_width if bar_width else ""
+            lines.append(f"  [{color}]{sev:<9}[/] {bar:<20} {n}")
+        self._content.update("\n".join(lines))

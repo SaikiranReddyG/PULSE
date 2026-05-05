@@ -16,9 +16,12 @@ from codex_dashboard.storage import Storage
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS events (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    received_at     TEXT NOT NULL,
     timestamp       TEXT NOT NULL,
+    schema_version  TEXT NOT NULL,
     source          TEXT NOT NULL,
-    source_version  TEXT NOT NULL,
+    source_version  TEXT,
+    host            TEXT,
     event_type      TEXT NOT NULL,
     severity        TEXT NOT NULL,
     payload_json    TEXT NOT NULL
@@ -28,80 +31,29 @@ CREATE TABLE IF NOT EXISTS events (
 
 @pytest.fixture
 def temp_db(tmp_path: Path) -> Path:
-    """Create an in-memory SQLite database with sample data."""
     db = tmp_path / "test.db"
-
     conn = sqlite3.connect(str(db))
-    conn.execute(SCHEMA_SQL)
-
-    # Insert sample events
-    events = [
-        (
-            "2026-05-05T10:00:00.000+0000",
-            "sentinel",
-            "0.1.0",
-            "sentinel.lifecycle.started",
-            "info",
-            json.dumps({"interface": "eth0"}),
-        ),
-        (
-            "2026-05-05T10:01:00.000+0000",
-            "sentinel",
-            "0.1.0",
-            "sentinel.alert",
-            "high",
-            json.dumps({"detection_type": "PORT_SCAN", "src_ip": "1.2.3.4"}),
-        ),
-        (
-            "2026-05-05T10:02:00.000+0000",
-            "netlab",
-            "0.1.0",
-            "netlab.scenario.started",
-            "info",
-            json.dumps({"scenario": "arp_spoof"}),
-        ),
-        (
-            "2026-05-05T10:03:00.000+0000",
-            "syswatch",
-            "0.1.0",
-            "syswatch.metrics",
-            "info",
-            json.dumps({"cpu_percent": 42.5, "mem_percent": 61.0}),
-        ),
-        (
-            "2026-05-05T10:04:00.000+0000",
-            "syswatch",
-            "0.1.0",
-            "syswatch.metrics",
-            "info",
-            json.dumps({"cpu_percent": 45.0, "mem_percent": 62.0}),
-        ),
-        (
-            "2026-05-05T10:05:00.000+0000",
-            "sentinel",
-            "0.1.0",
-            "sentinel.alert",
-            "critical",
-            json.dumps({"detection_type": "DDoS", "src_ip": "10.0.0.1"}),
-        ),
+    conn.executescript(SCHEMA_SQL)
+    now_iso = datetime.now(timezone.utc).astimezone().isoformat(timespec="milliseconds")
+    rows = [
+        ("sentinel", "sentinel.lifecycle.started", "info", {"interface": "lo"}),
+        ("sentinel", "sentinel.alert", "high", {"detection_type": "PORT_SCAN", "src_ip": "1.2.3.4", "dst_ip": "5.6.7.8", "message": "test"}),
+        ("netlab", "netlab.scenario.started", "info", {"scenario": "arp_spoof"}),
+        ("netlab", "netlab.scenario.completed", "info", {"scenario": "arp_spoof", "duration_seconds": 12.0}),
+        ("syswatch", "syswatch.metrics.cpu", "info", {"usage_pct": 7.7, "user_pct": 4.7, "system_pct": 2.0, "idle_pct": 92.3, "core_count": 12}),
+        ("syswatch", "syswatch.metrics.memory", "info", {"mem_total": 16000000, "mem_used": 9000000, "mem_available": 7000000, "swap_total": 0, "swap_used": 0}),
     ]
-
-    for event in events:
+    for source, event_type, severity, payload in rows:
         conn.execute(
-            """
-            INSERT INTO events (timestamp, source, source_version, event_type, severity, payload_json)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            event,
+            "INSERT INTO events (received_at, timestamp, schema_version, source, source_version, host, event_type, severity, payload_json) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (now_iso, now_iso, "1.0", source, "0.1.0", "test-host", event_type, severity, json.dumps(payload)),
         )
-
     conn.commit()
     conn.close()
-
     return db
 
 
 @pytest.fixture
 def storage(temp_db: Path) -> Storage:
-    """Create a Storage instance pointing to the test database."""
     return Storage(str(temp_db))

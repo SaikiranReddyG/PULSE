@@ -9,26 +9,25 @@ from codex_dashboard.app import CodexDashboardApp
 def _default_db_path() -> str:
     """Find the codex SQLite database.
 
-    Check (in order):
-    1. CODEX_DB environment variable
-    2. ./sqlite/codex.db relative to cwd
-    3. ~/codex-workspace/codex-platform/sqlite/codex.db
-
-    Returns the first path found.
+    Resolution order:
+    1. CODEX_DB env var
+    2. ./sqlite/codex.db (run from codex-platform repo root)
+    3. ../sqlite/codex.db (run from dashboard/ subdirectory)
     """
     import os
 
-    # Check environment variable
-    if env_path := os.getenv("CODEX_DB"):
-        return env_path
+    env = os.environ.get("CODEX_DB")
+    if env:
+        return env
 
-    # Check relative to cwd
     cwd = Path.cwd()
-    if (cwd / "sqlite" / "codex.db").exists():
-        return str(cwd / "sqlite" / "codex.db")
+    for candidate in [cwd / "sqlite" / "codex.db",
+                      cwd.parent / "sqlite" / "codex.db"]:
+        if candidate.is_file():
+            return str(candidate)
 
-    # Check default workspace location
-    return str(Path.home() / "codex-workspace" / "codex-platform" / "sqlite" / "codex.db")
+    # Fall back to the most likely path; the app will display an error if missing.
+    return str(cwd / "sqlite" / "codex.db")
 
 
 def main() -> int:
