@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
-from textual.widget import Widget
+# from textual.widget import Widget
 from textual.widgets import Static
 
 from codex_dashboard.storage import Storage
 
 
-class SyswatchScreen(Widget):
+class SyswatchScreen(Container):
     DEFAULT_CSS = """
     SyswatchScreen {
         layout: vertical;

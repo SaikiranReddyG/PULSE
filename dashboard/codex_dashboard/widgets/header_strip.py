@@ -6,7 +6,9 @@ from textual.widgets import Static
 from codex_dashboard.storage import Storage
 
 
-class HeaderStrip(Widget):
+from textual.containers import Container
+
+class HeaderStrip(Container):
     DEFAULT_CSS = """
     HeaderStrip {
         height: 3;

@@ -7,7 +7,9 @@ from codex_dashboard.storage import Storage
 from codex_dashboard.theme import SEVERITY_COLOR
 
 
-class RecentEventsTable(Widget):
+from textual.containers import Container
+
+class RecentEventsTable(Container):
     DEFAULT_CSS = """
     RecentEventsTable {
         border: round #333333;

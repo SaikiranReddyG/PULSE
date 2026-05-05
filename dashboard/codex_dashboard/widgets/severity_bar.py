@@ -7,7 +7,9 @@ from codex_dashboard.storage import Storage
 from codex_dashboard.theme import SEVERITY_COLOR
 
 
-class SeverityBar(Widget):
+from textual.containers import Container
+
+class SeverityBar(Container):
     DEFAULT_CSS = """
     SeverityBar {
         border: round #333333;

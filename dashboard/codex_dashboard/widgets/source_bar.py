@@ -7,7 +7,9 @@ from codex_dashboard.storage import Storage
 from codex_dashboard.theme import SOURCE_COLOR
 
 
-class SourceBar(Widget):
+from textual.containers import Container
+
+class SourceBar(Container):
     DEFAULT_CSS = """
     SourceBar {
         border: round #333333;

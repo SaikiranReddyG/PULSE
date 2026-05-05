@@ -11,7 +11,7 @@ from codex_dashboard.storage import Storage
 from codex_dashboard.theme import SEVERITY_COLOR
 
 
-class SentinelScreen(Widget):
+class SentinelScreen(Container):
     DEFAULT_CSS = """
     SentinelScreen {
         layout: vertical;

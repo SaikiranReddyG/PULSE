@@ -15,7 +15,7 @@ from codex_dashboard.widgets.source_bar import SourceBar
 from codex_dashboard.widgets.events_table import RecentEventsTable
 
 
-class OverviewScreen(Widget):
+class OverviewScreen(Container):
     DEFAULT_CSS = """
     OverviewScreen {
         layout: vertical;

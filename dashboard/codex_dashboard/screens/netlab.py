@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.widget import Widget
+from textual.containers import Container
 from textual.widgets import Static, DataTable
 
 from codex_dashboard.storage import Storage
 
 
-class NetlabScreen(Widget):
+class NetlabScreen(Container):
     DEFAULT_CSS = """
     NetlabScreen {
         layout: vertical;

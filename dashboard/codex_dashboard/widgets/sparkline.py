@@ -6,7 +6,9 @@ from textual.widgets import Static, Sparkline
 from codex_dashboard.storage import Storage
 
 
-class EventsSparkline(Widget):
+from textual.containers import Container
+
+class EventsSparkline(Container):
     DEFAULT_CSS = """
     EventsSparkline {
         border: round #333333;
