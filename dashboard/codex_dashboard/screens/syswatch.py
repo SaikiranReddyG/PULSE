@@ -83,7 +83,7 @@ class SyswatchScreen(Container):
             lines = [f"[bold #5fafd7]Disk[/]  [dim]({m['disk'].timestamp})[/]"]
             if disks:
                 for d in disks[:6]:
-                    lines.append(f"  {d.get('device', '?'):<20} read: {d.get('read_bytes', '?')}   write: {d.get('write_bytes', '?')}")
+                    lines.append(f"  {d.get('device', '?'):<20} read: {d.get('read_bps', '?')}   write: {d.get('write_bps', '?')}")
             else:
                 lines.append("  [#888888](no disks reported)[/]")
             self._disk.update("\n".join(lines))
@@ -96,7 +96,7 @@ class SyswatchScreen(Container):
             lines = [f"[bold #5fafd7]Network[/]  [dim]({m['network'].timestamp})[/]"]
             if ifaces:
                 for i in ifaces[:6]:
-                    lines.append(f"  {i.get('name', '?'):<20} rx: {i.get('rx_bytes', '?')}   tx: {i.get('tx_bytes', '?')}")
+                    lines.append(f"  {i.get('name', '?'):<20} rx: {i.get('rx_bps', '?')}   tx: {i.get('tx_bps', '?')}")
             else:
                 lines.append("  [#888888](no interfaces reported)[/]")
             self._network.update("\n".join(lines))

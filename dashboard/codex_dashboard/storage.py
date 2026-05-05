@@ -194,20 +194,30 @@ class Storage:
                 (limit * 3,),  # over-fetch since we collapse pairs
             ).fetchall()
 
-        scenarios: list[dict] = []
-        seen_starts: set[str] = set()
+        # Build per-scenario_name list of (id, event_type, timestamp)
+        by_name: dict[str, list] = {}
         for r in rows:
             try:
                 payload = json.loads(r["payload_json"])
             except (json.JSONDecodeError, TypeError):
                 payload = {}
-            scenario_name = payload.get("scenario", "unknown")
-            if r["event_type"] == "netlab.scenario.started":
-                if scenario_name not in seen_starts:
-                    scenarios.append({
-                        "scenario": scenario_name,
-                        "started_at": r["timestamp"],
-                        "status": "running",  # may be updated below
-                    })
-                    seen_starts.add(scenario_name)
+            name = payload.get("scenario", "unknown")
+            by_name.setdefault(name, []).append((r["id"], r["event_type"], r["timestamp"]))
+
+        scenarios: list[dict] = []
+        for name, entries in by_name.items():
+            # entries are already in DESC id order from the SQL ORDER BY
+            started = next((e for e in entries if e[1] == "netlab.scenario.started"), None)
+            if not started:
+                continue
+            completed = any(e[0] > started[0] and e[1] == "netlab.scenario.completed" for e in entries)
+            aborted = any(e[0] > started[0] and e[1] == "netlab.scenario.aborted" for e in entries)
+            status = "completed" if completed else ("aborted" if aborted else "running")
+            scenarios.append({
+                "scenario": name,
+                "started_at": started[2],
+                "status": status,
+            })
+        # Sort by most recent start
+        scenarios.sort(key=lambda s: s["started_at"], reverse=True)
         return scenarios[:limit]

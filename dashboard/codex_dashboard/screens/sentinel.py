@@ -50,8 +50,8 @@ class SentinelScreen(Container):
             self._summary.update("[bold #5fafd7]Detectors (last 60 min)[/]   [#888888]no alerts in window[/]")
 
         # Recent sentinel alerts
-        events = [e for e in self.storage.recent_events(limit=50)
-                  if e.source == "sentinel" and e.event_type == "sentinel.alert"]
+        events = [e for e in self.storage.recent_events(limit=50, source="sentinel")
+                  if e.event_type == "sentinel.alert"]
 
         self._table.clear()
         if not events:

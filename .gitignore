@@ -20,3 +20,6 @@ __pycache__/
 .pytest_cache/
 dist/
 build/
+# Personal notes / scratch
+end to end workflow
+*.notes
