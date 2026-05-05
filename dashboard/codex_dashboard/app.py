@@ -11,6 +11,9 @@ from textual.widgets import Footer, Header, Static, TabbedContent, TabPane
 
 from codex_dashboard.storage import Storage
 from codex_dashboard.screens.overview import OverviewScreen
+from codex_dashboard.screens.syswatch import SyswatchScreen
+from codex_dashboard.screens.sentinel import SentinelScreen
+from codex_dashboard.screens.netlab import NetlabScreen
 
 
 REFRESH_INTERVAL_SECONDS = 5.0
@@ -43,11 +46,11 @@ class CodexDashboardApp(App):
             with TabPane("Overview"):
                 yield OverviewScreen(self.storage)
             with TabPane("Syswatch"):
-                yield Static("[dim](coming next phase)[/dim]")
+                yield SyswatchScreen(self.storage)
             with TabPane("Sentinel"):
-                yield Static("[dim](coming next phase)[/dim]")
+                yield SentinelScreen(self.storage)
             with TabPane("Netlab"):
-                yield Static("[dim](coming next phase)[/dim]")
+                yield NetlabScreen(self.storage)
         yield Footer()
 
     def on_mount(self) -> None:
