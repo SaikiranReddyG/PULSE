@@ -42,5 +42,4 @@ dashboard:
 clean:
 	$(DOCKER_COMPOSE) down -v
 	rm -rf sqlite/codex.db sqlite/codex.db-journal sqlite/codex.db-wal sqlite/codex.db-shm
-	rm -rf redislite/codex.db-journal sqlite/codex.db-wal sqlite/codex.db-shm
-	rm -rf redis-data grafana-data n8n-data
+	rm -rf redis-data n8n-data
