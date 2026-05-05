@@ -1,6 +1,10 @@
 redis-data/
 grafana-data/
 n8n-data/
+dashboard/.venv/
+dashboard/*.egg-info/
+dashboard/__pycache__/
+dashboard/.pytest_cache/
 logs/
 sqlite/*.db
 sqlite/*.db-journal
