@@ -1,6 +1,17 @@
 # IDEAS — codex-platform v0.2 and beyond
 
-## Stack additions (deferred to v0.2+)
+## v0.2 dashboard backlog
+
+- **Live tail mode**: full-screen scrolling event view, filter by severity/source.
+- **Per-scenario timeline view**: when a netlab row is selected, drill in to a time-axis view of that scenario's events.
+- **Topology panel**: ASCII diagram of ARP-spoof / MITM scenarios showing attacker / victim / gateway roles.
+- **Top-talkers**: ranked source/dest IPs from sentinel alerts.
+- **Anomaly markers on syswatch sparklines**: red dot when syswatch.anomaly fires.
+- **Alert sound or system notification** on critical events.
+- **Theme variants**: light mode, high-contrast mode.
+- **Remote dashboard**: an HTTP variant of the dashboard for viewing in a browser when SSH isn't available.
+
+## Stack additions (deferred to v0.3+)
 
 - n8n workflow orchestration: rebuild workflows against the receiver's HTTP API. The old MQTT-based workflows in `exports/` were deleted with the bus.
 - Mosquitto MQTT bus, only if tools ever need fleet or multi-host comms.

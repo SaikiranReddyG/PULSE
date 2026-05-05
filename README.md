@@ -6,16 +6,15 @@ It is not a multi-host SIEM, not a managed service, and not a fleet manager. It 
 
 ## Services
 
-The stack is four containers:
+The stack is three containers (plus optional n8n):
 
 | Service | Purpose |
 |---|---|
 | `receiver` | HTTP API that accepts contract events, validates them, writes SQLite, and fans out to Redis Streams and Discord alerts |
 | `redis` | Live event tail via Redis Streams |
-| `grafana` | Dashboards built from SQLite |
 | `n8n` | Optional profile for future workflow automation |
 
-The legacy bus has been removed. The integration shape is HTTP POST.
+The dashboard runs locally as a terminal application and reads SQLite directly in read-only mode.
 
 ## Quick Start
 
@@ -29,8 +28,12 @@ make up
 curl http://127.0.0.1:8765/health
 # → {"status":"ok"}
 
-# Open Grafana
-xdg-open http://127.0.0.1:3000
+# In another terminal, launch the dashboard
+cd dashboard
+python3 -m venv .venv
+.venv/bin/pip install -e .
+codex-dashboard
+# or simply: make dashboard (from the root directory)
 
 # Stop
 make down
@@ -64,16 +67,28 @@ syswatch --config syswatch.yaml  # configure http_post in syswatch.yaml
            │ (cold)  │  │ (hot)   │
            └────┬────┘  └─────────┘
                 ▼
-           ┌─────────┐
-           │ Grafana │  dashboards reading SQLite
-           └─────────┘
+        codex-dashboard
+        (Textual TUI terminal app)
+        reads SQLite directly
 
 Optional: Discord webhook on high/critical events
 ```
 
 ## Configuration
 
-Copy `.env.example` to `.env` and edit the passwords and any optional alerting settings. The receiver, Redis, and Grafana ports are localhost-only by default.
+Copy `.env.example` to `.env` and edit the passwords and any optional alerting settings. The receiver and Redis ports are localhost-only by default.
+
+## Dashboard
+
+The dashboard is a terminal-native tool built with Textual. It reads the SQLite database directly in read-only mode (no writes possible—safe to run concurrently).
+
+See [dashboard/README.md](dashboard/README.md) for installation and usage details.
+
+```bash
+make dashboard
+```
+
+Press `q` to quit, `r` to force refresh, `1-4` to switch tabs (Overview, Syswatch, Sentinel, Netlab).
 
 ## Smoke Test
 
@@ -84,8 +99,10 @@ make smoke
 ## Troubleshooting
 
 - Receiver returns 422: the event is missing a required field; check `CONTRACT.md`.
-- Grafana shows no data: ensure `make up` ran successfully and `sqlite3 sqlite/codex.db ".tables"` shows `events`.
+- Dashboard says "database unavailable": ensure `make up` ran successfully and `sqlite3 sqlite/codex.db ".tables"` shows `events`.
+- Dashboard queries return no data: check that the stack is running and events have been sent. The SQLite file is read-only from the dashboard; the receiver writes to it.
 - Discord alerts are not firing: check `DISCORD_WEBHOOK_URL` in `.env` and receiver logs via `make logs`.
+- Remote access to the dashboard: the dashboard is a terminal app and runs on your local machine. To view it remotely, SSH into the box and run `codex-dashboard` in the SSH terminal.
 
 ## Related Repos
 
