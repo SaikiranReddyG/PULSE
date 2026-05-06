@@ -26,7 +26,7 @@ class EventsSparkline(Container):
     def __init__(self, storage: Storage, **kwargs):
         super().__init__(**kwargs)
         self.storage = storage
-        self._title = Static("[bold #5fafd7]Events / minute (last 60)[/]")
+        self._title = Static("[bold #5fafd7]Non-routine events / min (last 60)[/]")
         self._sparkline = Sparkline([0] * 60, summary_function=max)
 
     def compose(self):

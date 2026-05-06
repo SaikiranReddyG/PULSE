@@ -89,13 +89,20 @@ class Storage:
 
     # ---- events ----
 
-    def recent_events(self, limit: int = 50, source: str | None = None) -> list[Event]:
+    def recent_events(self, limit: int = 50, source: str | None = None, exclude_routine: bool = False) -> list[Event]:
         sql = ("SELECT id, timestamp, source, event_type, severity, payload_json "
                "FROM events ")
         params: list = []
+        conditions = []
         if source:
-            sql += "WHERE source = ? "
+            conditions.append("source = ?")
             params.append(source)
+        if exclude_routine:
+            conditions.append("NOT (source = 'syswatch' AND (event_type LIKE 'syswatch.metrics.%' OR event_type = 'syswatch.internal'))")
+        
+        if conditions:
+            sql += "WHERE " + " AND ".join(conditions) + " "
+        
         sql += "ORDER BY id DESC LIMIT ?"
         params.append(limit)
 
@@ -130,6 +137,7 @@ class Storage:
                 "       COUNT(*) AS n "
                 "FROM events "
                 "WHERE datetime(timestamp) >= datetime(?) "
+                "  AND NOT (source = 'syswatch' AND (event_type LIKE 'syswatch.metrics.%' OR event_type = 'syswatch.internal')) "
                 "GROUP BY minute "
                 "ORDER BY minute",
                 (cutoff_iso,),
@@ -165,6 +173,33 @@ class Storage:
             "disk": self.latest_event_by_type("syswatch", "syswatch.metrics.disk"),
             "network": self.latest_event_by_type("syswatch", "syswatch.metrics.network"),
         }
+
+    def syswatch_recent_signals(self, limit: int = 10) -> list[Event]:
+        sql = (
+            "SELECT id, timestamp, source, event_type, severity, payload_json "
+            "FROM events "
+            "WHERE source = 'syswatch' "
+            "  AND (event_type LIKE 'syswatch.anomaly%' OR event_type LIKE 'syswatch.lifecycle%') "
+            "ORDER BY id DESC LIMIT ?"
+        )
+        with self._connect() as conn:
+            rows = conn.execute(sql, (limit,)).fetchall()
+        
+        events: list[Event] = []
+        for r in rows:
+            try:
+                payload = json.loads(r["payload_json"])
+            except (json.JSONDecodeError, TypeError):
+                payload = {}
+            events.append(Event(
+                id=r["id"],
+                timestamp=r["timestamp"],
+                source=r["source"],
+                event_type=r["event_type"],
+                severity=r["severity"],
+                payload=payload,
+            ))
+        return events
 
     def sentinel_alert_counts_by_detector(self, minutes: int = 60) -> dict[str, int]:
         cutoff = (datetime.now(timezone.utc) - timedelta(minutes=minutes))

@@ -37,12 +37,14 @@ class SyswatchScreen(Container):
         self._memory = Static("", classes="metric-panel")
         self._disk = Static("", classes="metric-panel")
         self._network = Static("", classes="metric-panel")
+        self._anomalies = Static("", classes="metric-panel")
 
     def compose(self) -> ComposeResult:
         yield self._cpu
         yield self._memory
         yield self._disk
         yield self._network
+        yield self._anomalies
 
     def on_mount(self) -> None:
         self.refresh_data()
@@ -102,3 +104,13 @@ class SyswatchScreen(Container):
             self._network.update("\n".join(lines))
         else:
             self._network.update("[bold #5fafd7]Network[/]\n  [#888888]no syswatch.metrics.network events yet[/]")
+
+        recent_signals = self.storage.syswatch_recent_signals()
+        signal_lines = ["[bold #5fafd7]Recent Anomalies & Lifecycle[/]"]
+        if recent_signals:
+            for e in recent_signals:
+                summary = " ".join(f"{k}={v}" for k, v in list(e.payload.items())[:3] if not isinstance(v, (list, dict)))
+                signal_lines.append(f"  [dim]{e.timestamp[11:19]}[/] {e.severity} {e.event_type} {summary}")
+        else:
+            signal_lines.append("  [#888888]no syswatch.anomaly or syswatch.lifecycle events yet[/]")
+        self._anomalies.update("\n".join(signal_lines))

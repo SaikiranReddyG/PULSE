@@ -33,7 +33,7 @@ class RecentEventsTable(Container):
         self.refresh_data()
 
     def refresh_data(self) -> None:
-        events = self.storage.recent_events(limit=50)
+        events = self.storage.recent_events(limit=50, exclude_routine=True)
         self._table.clear()
         if not events:
             self._table.add_row("—", "—", "—", "—", "no events yet")
