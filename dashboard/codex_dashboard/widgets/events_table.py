@@ -1,13 +1,10 @@
 """Recent events table for the Overview tab — last 50 events, color-coded by severity."""
 
-from textual.widget import Widget
+from textual.containers import Container
 from textual.widgets import DataTable
 
 from codex_dashboard.storage import Storage
 from codex_dashboard.theme import SEVERITY_COLOR
-
-
-from textual.containers import Container
 
 class RecentEventsTable(Container):
     DEFAULT_CSS = """

@@ -1,12 +1,9 @@
 """Header strip — total events, events/min, source counts."""
 
-from textual.widget import Widget
+from textual.containers import Container
 from textual.widgets import Static
 
 from codex_dashboard.storage import Storage
-
-
-from textual.containers import Container
 
 class HeaderStrip(Container):
     DEFAULT_CSS = """

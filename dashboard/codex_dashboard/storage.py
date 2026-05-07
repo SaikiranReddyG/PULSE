@@ -45,8 +45,6 @@ class Storage:
         except sqlite3.Error:
             return False
 
-    # ---- counts ----
-
     def total_events(self) -> int:
         with self._connect() as conn:
             row = conn.execute("SELECT COUNT(*) AS n FROM events").fetchone()
@@ -87,8 +85,6 @@ class Storage:
             ).fetchall()
             return {r["source"]: r["n"] for r in rows}
 
-    # ---- events ----
-
     def recent_events(self, limit: int = 50, source: str | None = None, exclude_routine: bool = False) -> list[Event]:
         sql = ("SELECT id, timestamp, source, event_type, severity, payload_json "
                "FROM events ")
@@ -125,8 +121,6 @@ class Storage:
             ))
         return events
 
-    # ---- timeseries ----
-
     def events_per_minute(self, minutes: int = 60) -> list[tuple[str, int]]:
         """Return list of (minute_iso, count) covering the last N minutes."""
         cutoff = (datetime.now(timezone.utc) - timedelta(minutes=minutes))
@@ -143,8 +137,6 @@ class Storage:
                 (cutoff_iso,),
             ).fetchall()
             return [(r["minute"], r["n"]) for r in rows]
-
-    # ---- per-source helpers (used by the per-tool tabs) ----
 
     def latest_event_by_type(self, source: str, event_type_prefix: str) -> Event | None:
         with self._connect() as conn:

@@ -1,12 +1,9 @@
 """Events-per-minute sparkline using Textual's built-in Sparkline."""
 
-from textual.widget import Widget
+from textual.containers import Container
 from textual.widgets import Static, Sparkline
 
 from codex_dashboard.storage import Storage
-
-
-from textual.containers import Container
 
 class EventsSparkline(Container):
     DEFAULT_CSS = """
@@ -39,7 +36,6 @@ class EventsSparkline(Container):
     def refresh_data(self) -> None:
         series = self.storage.events_per_minute(60)
         # Pad to 60 minutes, even if some are missing
-        # series is list of (minute_iso, count) sorted asc
         values = [count for (_, count) in series]
         if len(values) < 60:
             values = [0] * (60 - len(values)) + values

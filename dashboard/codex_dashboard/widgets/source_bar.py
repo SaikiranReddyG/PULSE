@@ -1,13 +1,10 @@
 """Source breakdown — horizontal bar by source."""
 
-from textual.widget import Widget
+from textual.containers import Container
 from textual.widgets import Static
 
 from codex_dashboard.storage import Storage
 from codex_dashboard.theme import SOURCE_COLOR
-
-
-from textual.containers import Container
 
 class SourceBar(Container):
     DEFAULT_CSS = """

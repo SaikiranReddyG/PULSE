@@ -1,13 +1,10 @@
 """Severity breakdown — horizontal bar with per-severity counts and colors."""
 
-from textual.widget import Widget
+from textual.containers import Container
 from textual.widgets import Static
 
 from codex_dashboard.storage import Storage
 from codex_dashboard.theme import SEVERITY_COLOR
-
-
-from textual.containers import Container
 
 class SeverityBar(Container):
     DEFAULT_CSS = """
