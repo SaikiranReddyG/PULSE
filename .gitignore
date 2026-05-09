@@ -19,4 +19,4 @@ __pycache__/
 .venv/
 .pytest_cache/
 dist/
-build/
+build/sqlite/*.bak.*
