@@ -1,7 +1,6 @@
 """Main Textual app for pulse-dashboard."""
 
 from __future__ import annotations
-from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -21,7 +20,7 @@ REFRESH_INTERVAL_SECONDS = 5.0
 class PulseDashboardApp(App):
     """Terminal dashboard for pulse-platform."""
 
-    CSS_PATH = str(Path(__file__).parent / "styles.tcss")
+    CSS_PATH = "styles.tcss"
     TITLE = "pulse"
     SUB_TITLE = "platform dashboard"
 
