@@ -84,7 +84,7 @@ class Storage:
         if self._redis is None:
             return
         try:
-            stream_key = f"codex:events:{event['source']}"
+            stream_key = f"pulse:events:{event['source']}"
             self._redis.xadd(
                 stream_key,
                 {"data": json.dumps(event)},

@@ -1,1 +1,1 @@
-"""Tests for codex-dashboard."""
+"""Tests for pulse-dashboard."""

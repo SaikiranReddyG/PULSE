@@ -11,4 +11,4 @@ ENV PYTHONPATH=/app
 
 EXPOSE 8765
 
-CMD ["sh", "-c", "uvicorn receiver.app:app --host ${CODEX_RECEIVER_BIND:-0.0.0.0} --port ${CODEX_RECEIVER_PORT:-8765}"]
+CMD ["sh", "-c", "uvicorn receiver.app:app --host ${PULSE_RECEIVER_BIND:-0.0.0.0} --port ${PULSE_RECEIVER_PORT:-8765}"]

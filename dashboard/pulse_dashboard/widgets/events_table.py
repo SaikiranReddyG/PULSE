@@ -3,8 +3,8 @@
 from textual.containers import Container
 from textual.widgets import DataTable
 
-from codex_dashboard.storage import Storage
-from codex_dashboard.theme import SEVERITY_COLOR
+from pulse_dashboard.storage import Storage
+from pulse_dashboard.theme import SEVERITY_COLOR
 
 class RecentEventsTable(Container):
     DEFAULT_CSS = """

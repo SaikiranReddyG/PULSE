@@ -1,6 +1,6 @@
-# codex-platform
+# pulse-platform
 
-`codex-platform` is a single-host SOC integration stack. It receives codex-contract JSON events from three sibling tools, `sentinel` (network IDS), `netlab` (attack/defense lab), and `syswatch` (system monitor), then persists, alerts on, and visualizes those events.
+`pulse-platform` is a single-host SOC integration stack. It receives pulse-contract JSON events from three sibling tools, `sentinel` (network IDS), `netlab` (attack/defense lab), and `syswatch` (system monitor), then persists, alerts on, and visualizes those events.
 
 It is not a multi-host SIEM, not a managed service, and not a fleet manager. It runs on one Linux box. The security tools themselves live in separate repos and emit events to this platform's HTTP receiver.
 
@@ -19,7 +19,7 @@ The dashboard runs locally as a terminal application and reads SQLite directly i
 ## Quick Start
 
 ```bash
-git clone <repo-url> codex-platform && cd codex-platform
+git clone <repo-url> pulse-platform && cd pulse-platform
 cp .env.example .env
 # edit .env to set passwords and (optionally) DISCORD_WEBHOOK_URL
 make up
@@ -32,7 +32,7 @@ curl http://127.0.0.1:8765/health
 cd dashboard
 python3 -m venv .venv
 .venv/bin/pip install -e .
-codex-dashboard
+pulse-dashboard
 # or simply: make dashboard (from the root directory)
 
 # Stop
@@ -41,7 +41,7 @@ make down
 
 ## How Tools Connect
 
-Each codex tool supports an `http_post` output destination. Point it at the receiver endpoint:
+Each pulse tool supports an `http_post` output destination. Point it at the receiver endpoint:
 
 ```bash
 sudo sentinel run -i wlo1 --output http_post --output-url http://127.0.0.1:8765/events
@@ -67,7 +67,7 @@ syswatch --config syswatch.yaml  # configure http_post in syswatch.yaml
            │ (cold)  │  │ (hot)   │
            └────┬────┘  └─────────┘
                 ▼
-        codex-dashboard
+        pulse-dashboard
         (Textual TUI terminal app)
         reads SQLite directly
 
@@ -99,10 +99,10 @@ make smoke
 ## Troubleshooting
 
 - Receiver returns 422: the event is missing a required field; check `CONTRACT.md`.
-- Dashboard says "database unavailable": ensure `make up` ran successfully and `sqlite3 sqlite/codex.db ".tables"` shows `events`.
+- Dashboard says "database unavailable": ensure `make up` ran successfully and `sqlite3 sqlite/pulse.db ".tables"` shows `events`.
 - Dashboard queries return no data: check that the stack is running and events have been sent. The SQLite file is read-only from the dashboard; the receiver writes to it.
 - Discord alerts are not firing: check `DISCORD_WEBHOOK_URL` in `.env` and receiver logs via `make logs`.
-- Remote access to the dashboard: the dashboard is a terminal app and runs on your local machine. To view it remotely, SSH into the box and run `codex-dashboard` in the SSH terminal.
+- Remote access to the dashboard: the dashboard is a terminal app and runs on your local machine. To view it remotely, SSH into the box and run `pulse-dashboard` in the SSH terminal.
 
 ## Related Repos
 

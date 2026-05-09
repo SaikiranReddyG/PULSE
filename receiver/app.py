@@ -1,4 +1,4 @@
-"""codex-platform receiver — accept contract events, persist them, and fan them out."""
+"""pulse-platform receiver — accept contract events, persist them, and fan them out."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ class Event(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
-app = FastAPI(title="codex-platform receiver", version="0.1.0")
+app = FastAPI(title="pulse-platform receiver", version="0.1.0")
 storage: Storage | None = None
 
 
@@ -40,7 +40,7 @@ storage: Storage | None = None
 def on_startup() -> None:
     global storage
     storage = Storage(
-        sqlite_path=os.environ.get("CODEX_SQLITE_DB", "/data/codex.db"),
+        sqlite_path=os.environ.get("PULSE_SQLITE_DB", "/data/pulse.db"),
         redis_host=os.environ.get("REDIS_HOST", "redis"),
         redis_port=int(os.environ.get("REDIS_PORT", "6379")),
         redis_password=os.environ.get("REDIS_PASSWORD") or None,

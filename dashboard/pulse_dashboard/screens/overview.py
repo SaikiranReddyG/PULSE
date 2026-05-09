@@ -7,12 +7,12 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.widget import Widget
 from textual.widgets import Static
 
-from codex_dashboard.storage import Storage
-from codex_dashboard.widgets.header_strip import HeaderStrip
-from codex_dashboard.widgets.sparkline import EventsSparkline
-from codex_dashboard.widgets.severity_bar import SeverityBar
-from codex_dashboard.widgets.source_bar import SourceBar
-from codex_dashboard.widgets.events_table import RecentEventsTable
+from pulse_dashboard.storage import Storage
+from pulse_dashboard.widgets.header_strip import HeaderStrip
+from pulse_dashboard.widgets.sparkline import EventsSparkline
+from pulse_dashboard.widgets.severity_bar import SeverityBar
+from pulse_dashboard.widgets.source_bar import SourceBar
+from pulse_dashboard.widgets.events_table import RecentEventsTable
 
 
 class OverviewScreen(Container):

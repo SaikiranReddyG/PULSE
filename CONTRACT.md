@@ -1,8 +1,8 @@
-# codex-platform Receiver Contract
+# pulse-platform Receiver Contract
 
 ## Purpose
 
-`codex-platform` consumes codex-contract events. This document describes the receiver-side contract for `POST /events`. The sender-side contract lives in each tool's own `CONTRACT.md`.
+`pulse-platform` consumes pulse-contract events. This document describes the receiver-side contract for `POST /events`. The sender-side contract lives in each tool's own `CONTRACT.md`.
 
 ## Event Schema Accepted By `POST /events`
 
@@ -28,7 +28,7 @@
 ## Storage And Downstream
 
 - All accepted events are written to SQLite in the `events` table.
-- Events are also `XADD`-ed to a Redis Stream named `codex:events:<source>`.
+- Events are also `XADD`-ed to a Redis Stream named `pulse:events:<source>`.
 - Redis failures are best effort and do not block SQLite writes.
 - Events with `severity` in `{high, critical}` trigger a Discord webhook when configured.
 

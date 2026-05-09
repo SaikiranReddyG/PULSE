@@ -1,4 +1,4 @@
-"""Pytest fixtures for codex-dashboard."""
+"""Pytest fixtures for pulse-dashboard."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from codex_dashboard.storage import Storage
+from pulse_dashboard.storage import Storage
 
 
 SCHEMA_SQL = """

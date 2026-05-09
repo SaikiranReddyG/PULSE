@@ -1,14 +1,14 @@
-"""Source breakdown — horizontal bar by source."""
+"""Severity breakdown — horizontal bar with per-severity counts and colors."""
 
 from textual.containers import Container
 from textual.widgets import Static
 
-from codex_dashboard.storage import Storage
-from codex_dashboard.theme import SOURCE_COLOR
+from pulse_dashboard.storage import Storage
+from pulse_dashboard.theme import SEVERITY_COLOR
 
-class SourceBar(Container):
+class SeverityBar(Container):
     DEFAULT_CSS = """
-    SourceBar {
+    SeverityBar {
         border: round #333333;
         padding: 1 2;
     }
@@ -26,15 +26,17 @@ class SourceBar(Container):
         self.refresh_data()
 
     def refresh_data(self) -> None:
-        counts = self.storage.source_counts(60)
+        counts = self.storage.severity_counts(60)
         if not counts:
-            self._content.update("[bold #5fafd7]Source (last 60m)[/]\n  [#888888]no events[/]")
+            self._content.update("[bold #5fafd7]Severity (last 60m)[/]\n  [#888888]no events[/]")
             return
-        lines = ["[bold #5fafd7]Source (last 60m)[/]"]
+        order = ["info", "low", "medium", "high", "critical"]
+        lines = ["[bold #5fafd7]Severity (last 60m)[/]"]
         max_n = max(counts.values()) if counts else 1
-        for source, n in sorted(counts.items()):
-            color = SOURCE_COLOR.get(source, "#e8e8e8")
+        for sev in order:
+            n = counts.get(sev, 0)
+            color = SEVERITY_COLOR.get(sev, "#e8e8e8")
             bar_width = int((n / max_n) * 20) if max_n else 0
             bar = "█" * bar_width if bar_width else ""
-            lines.append(f"  [{color}]{source:<10}[/] {bar:<20} {n}")
+            lines.append(f"  [{color}]{sev:<9}[/] {bar:<20} {n}")
         self._content.update("\n".join(lines))

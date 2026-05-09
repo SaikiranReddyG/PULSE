@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/smoke.sh — end-to-end smoke test for codex-platform v0.1.
+# tests/smoke.sh — end-to-end smoke test for pulse-platform v0.1.
 #
 # What it does:
 #   1. Brings the stack up.
@@ -27,7 +27,7 @@ if [[ ! -f .env ]]; then
 fi
 
 echo "==== Bringing up stack ===="
-rm -f sqlite/codex.db sqlite/codex.db-journal sqlite/codex.db-wal sqlite/codex.db-shm
+rm -f sqlite/pulse.db sqlite/pulse.db-journal sqlite/pulse.db-wal sqlite/pulse.db-shm
 make up
 
 echo "==== Waiting for receiver to be healthy ===="
@@ -56,7 +56,7 @@ curl -sf -X POST http://127.0.0.1:8765/events \
     "event_type": "sentinel.lifecycle.started",
     "severity": "info",
     "payload": {"interface": "lo"}
-  }' | tee /tmp/codex-smoke-1.json
+  }' | tee /tmp/pulse-smoke-1.json
 echo
 
 curl -sf -X POST http://127.0.0.1:8765/events \
@@ -70,7 +70,7 @@ curl -sf -X POST http://127.0.0.1:8765/events \
     "event_type": "netlab.scenario.started",
     "severity": "info",
     "payload": {"scenario": "arp_spoof"}
-  }' | tee /tmp/codex-smoke-2.json
+  }' | tee /tmp/pulse-smoke-2.json
 echo
 
 curl -sf -X POST http://127.0.0.1:8765/events \
@@ -84,7 +84,7 @@ curl -sf -X POST http://127.0.0.1:8765/events \
     "event_type": "syswatch.metrics",
     "severity": "info",
     "payload": {"cpu_percent": 42.5, "mem_percent": 61.0}
-  }' | tee /tmp/codex-smoke-3.json
+  }' | tee /tmp/pulse-smoke-3.json
 echo
 
 curl -sf -X POST http://127.0.0.1:8765/events \
@@ -98,25 +98,25 @@ curl -sf -X POST http://127.0.0.1:8765/events \
     "event_type": "sentinel.alert",
     "severity": "high",
     "payload": {"detection_type": "PORT_SCAN", "src_ip": "1.2.3.4", "dst_ip": "5.6.7.8", "message": "smoke test alert"}
-  }' | tee /tmp/codex-smoke-4.json
+  }' | tee /tmp/pulse-smoke-4.json
 echo
 
 curl -sf -X POST http://127.0.0.1:8765/events \
   -H "Content-Type: application/json" \
-  -d '{"schema_version": "1.0"}' | tee /tmp/codex-smoke-5.json
+  -d '{"schema_version": "1.0"}' | tee /tmp/pulse-smoke-5.json
 echo
 
 echo "==== Querying SQLite to verify persistence ===="
-EVENT_COUNT=$(sqlite3 sqlite/codex.db "SELECT COUNT(*) FROM events WHERE host = 'smoke-test'")
+EVENT_COUNT=$(sqlite3 sqlite/pulse.db "SELECT COUNT(*) FROM events WHERE host = 'smoke-test'")
 if [[ "${EVENT_COUNT}" -lt 4 ]]; then
   echo "[!] FAIL: expected at least 4 events with host='smoke-test', got ${EVENT_COUNT}"
-  sqlite3 sqlite/codex.db "SELECT id, source, event_type, severity FROM events WHERE host = 'smoke-test'"
+  sqlite3 sqlite/pulse.db "SELECT id, source, event_type, severity FROM events WHERE host = 'smoke-test'"
   exit 1
 fi
 echo "[+] Found ${EVENT_COUNT} smoke-test events in SQLite"
 
 echo "==== Verifying source distribution ===="
-SOURCES=$(sqlite3 sqlite/codex.db "SELECT DISTINCT source FROM events WHERE host = 'smoke-test' ORDER BY source")
+SOURCES=$(sqlite3 sqlite/pulse.db "SELECT DISTINCT source FROM events WHERE host = 'smoke-test' ORDER BY source")
 EXPECTED=$'netlab\nsentinel\nsyswatch'
 if [[ "${SOURCES}" != "${EXPECTED}" ]]; then
   echo "[!] FAIL: expected sources netlab/sentinel/syswatch, got:"

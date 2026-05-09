@@ -6,7 +6,7 @@ from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Static, DataTable
 
-from codex_dashboard.storage import Storage
+from pulse_dashboard.storage import Storage
 
 
 class NetlabScreen(Container):

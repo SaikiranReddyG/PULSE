@@ -34,6 +34,17 @@ Tab.-active {
     background: #1a1a1a;
 }
 
+TabPane {
+    height: 1fr;
+}
+
+OverviewScreen,
+SyswatchScreen,
+SentinelScreen,
+NetlabScreen {
+    height: 1fr;
+}
+
 .panel {
     border: round #333333;
     padding: 1 2;

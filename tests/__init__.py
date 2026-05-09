@@ -1,1 +1,1 @@
-"""Test package for codex-platform."""
+"""Test package for pulse-platform."""

@@ -1,14 +1,8 @@
-# codex-dashboard
+# pulse-dashboard
 
-A terminal-native dashboard for codex-platform v0.2+. Built with Textual. Reads SQLite directly in read-only mode.
-
-## What it is
-
-`codex-dashboard` is a CLI tool that runs a responsive terminal UI (TUI) in your terminal. It displays real-time event data from the codex-platform's SQLite database across four tabs: Overview, syswatch, sentinel, and netlab.
+Terminal dashboard for pulse-platform. Built with Textual.
 
 ## Install
-
-1. In a Python 3.10+ virtual environment:
 
 ```bash
 cd dashboard
@@ -16,33 +10,23 @@ python3 -m venv .venv
 .venv/bin/pip install -e .
 ```
 
-2. From anywhere, run:
+## Run
 
 ```bash
-codex-dashboard
+.venv/bin/pulse-dashboard
 ```
 
-The dashboard will auto-discover the SQLite database at `~/codex-workspace/codex-platform/sqlite/codex.db` or wherever the stack is running.
-
-To point to a custom database, set `CODEX_DB`:
-
-```bash
-CODEX_DB=/path/to/codex.db codex-dashboard
-```
+Set `PULSE_DB` env var to override database path.
 
 ## Keys
 
-- `q` — Quit
-- `r` — Force refresh
-- `1`, `2`, `3`, `4` — Switch to Overview, syswatch, sentinel, or netlab tab
+- `q` quit
+- `r` refresh
+- `1-4` switch tabs
 
 ## Tabs
 
-- **Overview** — Event counts, severity breakdown, recent events log.
-- **syswatch** — Latest CPU, memory, disk, and network metrics.
-- **sentinel** — Alert breakdown by detection type + recent alerts feed.
-- **netlab** — Recent scenario runs and activity.
-
-## Theme
-
-Colors are minimal and purposeful. Severity levels (info, low, medium, high, critical) are color-coded. The UI is dark and clean — suitable for extended viewing.
+- Overview: total events, severity/source breakdown, recent events
+- Syswatch: latest CPU and memory metrics
+- Sentinel: alert counts by detector (last 60m)
+- Netlab: recent scenario runs

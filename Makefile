@@ -3,7 +3,7 @@
 DOCKER_COMPOSE := docker compose
 
 help:
-	@echo "codex-platform Makefile targets:"
+	@echo "pulse-platform Makefile targets:"
 	@echo "  make up      - start the stack (receiver + redis)"
 	@echo "  make down    - stop the stack, keep volumes"
 	@echo "  make logs    - tail logs from all services"
@@ -15,14 +15,14 @@ help:
 up:
 	@test -f .env || (echo "ERROR: .env not found. Copy .env.example to .env first." && exit 1)
 	mkdir -p sqlite redis-data
-	@if [ ! -f sqlite/codex.db ]; then \
+	@if [ ! -f sqlite/pulse.db ]; then \
 	  echo "Initializing SQLite schema..."; \
-	  sqlite3 sqlite/codex.db < sqlite/schema.sql; \
+	  sqlite3 sqlite/pulse.db < sqlite/schema.sql; \
 	fi
 	$(DOCKER_COMPOSE) up -d --build
 	@echo ""
 	@echo "Stack up. Receiver: http://127.0.0.1:8765"
-	@echo "Run 'codex-dashboard' (or 'make dashboard') to view the terminal dashboard."
+	@echo "Run 'pulse-dashboard' (or 'make dashboard') to view the terminal dashboard."
 
 down:
 	$(DOCKER_COMPOSE) down
@@ -36,10 +36,10 @@ smoke:
 test:
 	cd receiver && python -m pytest ../tests/ -v
 dashboard:
-	@command -v codex-dashboard >/dev/null 2>&1 || (echo "Installing dashboard from venv..." && cd dashboard && .venv/bin/pip install -q -e . && cd ..)
-	dashboard/.venv/bin/codex-dashboard
+	@command -v pulse-dashboard >/dev/null 2>&1 || (echo "Installing dashboard from venv..." && cd dashboard && .venv/bin/pip install -q -e . && cd ..)
+	dashboard/.venv/bin/pulse-dashboard
 
 clean:
 	$(DOCKER_COMPOSE) down -v
-	rm -rf sqlite/codex.db sqlite/codex.db-journal sqlite/codex.db-wal sqlite/codex.db-shm
+	rm -rf sqlite/pulse.db sqlite/pulse.db-journal sqlite/pulse.db-wal sqlite/pulse.db-shm
 	rm -rf redis-data n8n-data
