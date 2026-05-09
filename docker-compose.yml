@@ -1,5 +1,5 @@
 # ============================================================================
-# codex-platform — single-host SOC integration stack
+# pulse-platform — single-host SOC integration stack
 # ============================================================================
 # Usage:
 #   cp .env.example .env
@@ -11,20 +11,21 @@
 
 services:
   receiver:
+    image: pulse-platform-receiver
     build:
       context: ./receiver
       dockerfile: Dockerfile
-    container_name: codex-receiver
+    container_name: pulse-receiver
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${CODEX_RECEIVER_PORT}:${CODEX_RECEIVER_PORT}"
+      - "127.0.0.1:${PULSE_RECEIVER_PORT}:${PULSE_RECEIVER_PORT}"
     environment:
-      CODEX_RECEIVER_BIND: ${CODEX_RECEIVER_BIND}
-      CODEX_RECEIVER_PORT: ${CODEX_RECEIVER_PORT}
-      CODEX_SQLITE_DB: ${CODEX_SQLITE_DB}
+      PULSE_RECEIVER_BIND: ${PULSE_RECEIVER_BIND}
+      PULSE_RECEIVER_PORT: ${PULSE_RECEIVER_PORT}
+      PULSE_SQLITE_DB: ${PULSE_SQLITE_DB}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${CODEX_REDIS_PASS}
+      REDIS_PASSWORD: ${PULSE_REDIS_PASS}
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
     volumes:
       - ./sqlite:/data
@@ -32,19 +33,19 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - codex-net
+      - pulse-net
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:' + str(${CODEX_RECEIVER_PORT}) + '/health', timeout=2)\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:' + str(${PULSE_RECEIVER_PORT}) + '/health', timeout=2)\""]
       interval: 30s
       timeout: 5s
       retries: 3
 
   redis:
     image: redis:7.4-alpine
-    container_name: codex-redis
+    container_name: pulse-redis
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${CODEX_REDIS_PORT}:6379"
+      - "127.0.0.1:${PULSE_REDIS_PORT}:6379"
     volumes:
       - ./redis-data:/data
     command: >
@@ -57,23 +58,23 @@ services:
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru
       --bind 0.0.0.0
-      --requirepass ${CODEX_REDIS_PASS}
+      --requirepass ${PULSE_REDIS_PASS}
     networks:
-      - codex-net
+      - pulse-net
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${CODEX_REDIS_PASS}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${PULSE_REDIS_PASS}", "ping"]
       interval: 30s
       timeout: 5s
       retries: 3
 
   n8n:
     image: n8nio/n8n:1.76.1
-    container_name: codex-n8n
+    container_name: pulse-n8n
     restart: unless-stopped
     profiles:
       - n8n
     ports:
-      - "127.0.0.1:${CODEX_N8N_PORT}:5678"
+      - "127.0.0.1:${PULSE_N8N_PORT}:5678"
     environment:
       N8N_DIAGNOSTICS_ENABLED: "false"
       GENERIC_TIMEZONE: Europe/Paris
@@ -84,8 +85,8 @@ services:
       receiver:
         condition: service_started
     networks:
-      - codex-net
+      - pulse-net
 
 networks:
-  codex-net:
+  pulse-net:
     driver: bridge

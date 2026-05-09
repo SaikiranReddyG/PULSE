@@ -3,7 +3,7 @@
 from textual.containers import Container
 from textual.widgets import Static, Sparkline
 
-from codex_dashboard.storage import Storage
+from pulse_dashboard.storage import Storage
 
 class EventsSparkline(Container):
     DEFAULT_CSS = """

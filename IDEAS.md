@@ -1,4 +1,4 @@
-# IDEAS — codex-platform v0.2 and beyond
+# IDEAS — pulse-platform v0.2 and beyond
 
 ## v0.2 dashboard backlog
 

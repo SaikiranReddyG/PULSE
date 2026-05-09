@@ -1,1 +1,1 @@
-"""Receiver package for codex-platform."""
+"""Receiver package for pulse-platform."""

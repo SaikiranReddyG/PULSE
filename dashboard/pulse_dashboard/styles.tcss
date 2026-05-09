@@ -1,0 +1,39 @@
+Screen {
+    background: #1a1a1a;
+    color: #e8e8e8;
+}
+
+Header {
+    background: #222222;
+    color: #e8e8e8;
+}
+
+Footer {
+    background: #222222;
+    color: #888888;
+}
+
+TabbedContent {
+    background: #1a1a1a;
+}
+
+Tabs {
+    background: #222222;
+}
+
+Tab {
+    color: #888888;
+}
+
+Tab:hover {
+    color: #e8e8e8;
+}
+
+Tab.-active {
+    color: #5fafd7;
+    background: #1a1a1a;
+}
+
+TabPane {
+    height: 100%;
+}

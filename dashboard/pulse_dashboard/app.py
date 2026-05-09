@@ -1,27 +1,28 @@
-"""Main Textual app for codex-dashboard."""
+"""Main Textual app for pulse-dashboard."""
 
 from __future__ import annotations
+from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
 from textual.widgets import Footer, Header, TabbedContent, TabPane, Static
 
-from codex_dashboard.storage import Storage
-from codex_dashboard.screens.overview import OverviewScreen
-from codex_dashboard.screens.syswatch import SyswatchScreen
-from codex_dashboard.screens.sentinel import SentinelScreen
-from codex_dashboard.screens.netlab import NetlabScreen
+from pulse_dashboard.storage import Storage
+from pulse_dashboard.screens.overview import OverviewScreen
+from pulse_dashboard.screens.syswatch import SyswatchScreen
+from pulse_dashboard.screens.sentinel import SentinelScreen
+from pulse_dashboard.screens.netlab import NetlabScreen
 
 
 REFRESH_INTERVAL_SECONDS = 5.0
 
 
-class CodexDashboardApp(App):
-    """Terminal dashboard for codex-platform."""
+class PulseDashboardApp(App):
+    """Terminal dashboard for pulse-platform."""
 
-    CSS_PATH = "styles.tcss"
-    TITLE = "codex"
+    CSS_PATH = str(Path(__file__).parent / "styles.tcss")
+    TITLE = "pulse"
     SUB_TITLE = "platform dashboard"
 
     BINDINGS = [

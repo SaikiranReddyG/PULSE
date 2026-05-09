@@ -1,4 +1,4 @@
--- codex-platform v0.1 SQLite schema
+-- pulse-platform v0.1 SQLite schema
 -- Single events table. No metrics/intel split.
 
 PRAGMA journal_mode = WAL;

@@ -1,4 +1,4 @@
-"""Read-only SQLite query layer for the codex dashboard.
+"""Read-only SQLite query layer for the pulse dashboard.
 
 All queries open the database in ?mode=ro to guarantee the dashboard
 cannot accidentally write. WAL mode set by the receiver allows concurrent
