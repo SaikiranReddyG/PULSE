@@ -27,6 +27,7 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${PULSE_REDIS_PASS}
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      PULSE_RECEIVER_TOKEN: ${PULSE_RECEIVER_TOKEN}
     volumes:
       - ./sqlite:/data
     depends_on:
