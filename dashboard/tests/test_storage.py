@@ -59,6 +59,13 @@ def test_sentinel_alert_counts_by_detector(storage):
     assert counts.get("PORT_SCAN") == 1
 
 
+def test_sentinel_top_talkers(storage):
+    talkers = storage.sentinel_top_talkers(24, 10)
+    assert len(talkers) == 1
+    assert talkers[0]["src_ip"] == "1.2.3.4"
+    assert talkers[0]["alert_count"] == 1
+
+
 def test_netlab_recent_scenarios(storage):
     scenarios = storage.netlab_recent_scenarios(limit=10)
     assert len(scenarios) >= 1
