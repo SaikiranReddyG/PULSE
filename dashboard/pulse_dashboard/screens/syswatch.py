@@ -84,7 +84,7 @@ class SyswatchScreen(Container):
             lines = [f"[bold #5fafd7]Disk[/]  [dim]({m['disk'].timestamp})[/]"]
             if disks:
                 for d in disks[:6]:
-                    lines.append(f"  {d.get('device', '?'):<20} read: {d.get('read_bps', '?')}   write: {d.get('write_bps', '?')}")
+                    lines.append(f"  {d.get('name', d.get('device', '?')):<20} read: {d.get('read_bps', '?')}   write: {d.get('write_bps', '?')}")
             else:
                 lines.append("  [#888888](no disks reported)[/]")
             self._disk.update("\n".join(lines))
