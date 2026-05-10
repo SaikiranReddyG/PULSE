@@ -14,6 +14,7 @@ log = logging.getLogger("receiver.storage")
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS events (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id        TEXT,
     received_at     TEXT NOT NULL,
     timestamp       TEXT NOT NULL,
     schema_version  TEXT NOT NULL,
@@ -29,6 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
 CREATE INDEX IF NOT EXISTS idx_events_source ON events(source);
 CREATE INDEX IF NOT EXISTS idx_events_severity ON events(severity);
 CREATE INDEX IF NOT EXISTS idx_events_event_type ON events(event_type);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_event_id ON events(event_id) WHERE event_id IS NOT NULL;
 """.strip()
 
 
@@ -42,6 +44,21 @@ class Storage:
         self._conn.execute("PRAGMA synchronous = NORMAL")
         self._conn.executescript(SCHEMA_SQL)
         self._conn.commit()
+        
+        # Migration: add event_id column if it doesn't exist
+        try:
+            cursor = self._conn.execute("PRAGMA table_info(events)")
+            columns = {row[1] for row in cursor.fetchall()}
+            if "event_id" not in columns:
+                self._conn.execute("ALTER TABLE events ADD COLUMN event_id TEXT")
+                self._conn.execute(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS idx_events_event_id ON events(event_id) WHERE event_id IS NOT NULL"
+                )
+                self._conn.commit()
+                log.info("migrated: added event_id column to events table")
+        except Exception as exc:
+            log.warning("migration check failed (may be expected): %s", exc)
+        
         self._redis = redis.Redis(
             host=redis_host,
             port=redis_port,
@@ -56,17 +73,22 @@ class Storage:
             log.warning("redis ping failed (will continue without redis): %s", exc)
             self._redis = None
 
-    def write_event(self, event: dict[str, Any], received_at: str) -> None:
-        self._write_sqlite(event, received_at)
-        self._write_redis_stream(event)
+    def write_event(self, event: dict[str, Any], received_at: str) -> bool:
+        """Write event to SQLite and Redis. Return True if row was written, False if duplicate/ignored."""
+        written = self._write_sqlite(event, received_at)
+        if written:
+            self._write_redis_stream(event)
+        return written
 
-    def _write_sqlite(self, event: dict[str, Any], received_at: str) -> None:
-        self._conn.execute(
-            """INSERT INTO events
-               (received_at, timestamp, schema_version, source, source_version,
+    def _write_sqlite(self, event: dict[str, Any], received_at: str) -> bool:
+        """Insert event into SQLite using INSERT OR IGNORE for deduplication. Return True if row was written."""
+        cursor = self._conn.execute(
+            """INSERT OR IGNORE INTO events
+               (event_id, received_at, timestamp, schema_version, source, source_version,
                 host, event_type, severity, payload_json)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
+                event.get("event_id"),
                 received_at,
                 event["timestamp"],
                 event["schema_version"],
@@ -79,6 +101,8 @@ class Storage:
             ),
         )
         self._conn.commit()
+        # rowcount == 1 means a row was inserted; 0 means INSERT OR IGNORE skipped it (duplicate event_id)
+        return cursor.rowcount == 1
 
     def _write_redis_stream(self, event: dict[str, Any]) -> None:
         if self._redis is None:
