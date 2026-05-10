@@ -41,12 +41,15 @@ make down
 
 ## How Tools Connect
 
-Each pulse tool supports an `http_post` output destination. Point it at the receiver endpoint:
+Each pulse tool supports an `http_post` output destination. Point it at the receiver endpoint with bearer token authentication:
 
 ```bash
-sudo sentinel run -i wlo1 --output http_post --output-url http://127.0.0.1:8765/events
-sudo netlab run arp_spoof --output http_post --output-url http://127.0.0.1:8765/events
-syswatch --config syswatch.yaml  # configure http_post in syswatch.yaml
+# Set PULSE_RECEIVER_TOKEN to match the value in .env
+export PULSE_RECEIVER_TOKEN="changeme-receiver-token"
+
+sudo sentinel run -i wlo1 --output http_post --output-url http://127.0.0.1:8765/events --auth-header "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}"
+sudo netlab run arp_spoof --output http_post --output-url http://127.0.0.1:8765/events --auth-header "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}"
+syswatch --config syswatch.yaml  # configure http_post in syswatch.yaml with Authorization: Bearer header
 ```
 
 ## Architecture

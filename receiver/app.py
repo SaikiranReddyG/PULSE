@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 import logging
 import os
+import secrets
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field, ValidationError
 
 from receiver.alerting import maybe_alert_discord
@@ -20,6 +21,32 @@ log = logging.getLogger("receiver")
 VALID_SEVERITIES = {"info", "low", "medium", "high", "critical"}
 VALID_SOURCES = {"sentinel", "netlab", "syswatch"}
 
+
+def check_bearer_token(request: Request) -> None:
+    """Dependency function to check bearer token authentication.
+    
+    Reads PULSE_RECEIVER_TOKEN from environment. If set, requires requests to include
+    Authorization: Bearer <token> header. If not set (or empty), rejects all requests.
+    
+    Raises HTTPException(401, {"detail": "unauthorized"}) if token is missing, wrong, or empty.
+    """
+    token_from_env = os.environ.get("PULSE_RECEIVER_TOKEN", "")
+    
+    # If env var is not set or empty, reject all requests
+    if not token_from_env:
+        raise HTTPException(status_code=401, detail="unauthorized")    
+    # Get Authorization header
+    auth_header = request.headers.get("Authorization", "")
+    
+    # Parse and validate Bearer token
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="unauthorized")
+    
+    token_from_header = auth_header[7:]  # Remove "Bearer " prefix
+    
+    # Use secrets.compare_digest to prevent timing attacks
+    if not secrets.compare_digest(token_from_header, token_from_env):
+        raise HTTPException(status_code=401, detail="unauthorized")
 
 class Event(BaseModel):
     schema_version: str
@@ -65,7 +92,7 @@ def health() -> dict[str, str]:
 
 
 @app.post("/events")
-async def post_events(request: Request) -> dict[str, Any]:
+async def post_events(request: Request, _token_verified: None = Depends(check_bearer_token)) -> dict[str, Any]:
     try:
         body = await request.json()
     except json.JSONDecodeError as exc:

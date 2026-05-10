@@ -35,6 +35,6 @@
 ## What This Is Not
 
 - Not idempotent.
-- Not authenticated.
+- Not authenticated by default — set PULSE_RECEIVER_TOKEN to require bearer token auth.
 - Not transactional across SQLite and Redis.
 - Not exposed beyond localhost by default.
