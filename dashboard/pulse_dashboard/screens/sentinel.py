@@ -20,7 +20,11 @@ class SentinelScreen(Container):
         text-style: bold;
         margin: 1 1 0 1;
     }
-    SentinelScreen DataTable {
+    SentinelScreen .top-talkers {
+        height: 12;
+        margin: 0 1 1 1;
+    }
+    SentinelScreen .alerts-table {
         height: 1fr;
         margin: 0 1 1 1;
     }
@@ -30,13 +34,18 @@ class SentinelScreen(Container):
         super().__init__(**kwargs)
         self.storage = storage
         self._summary = Static("", classes="panel-title")
-        self._table = DataTable(zebra_stripes=True, cursor_type="row")
+        self._top_talkers_title = Static("[bold #5fafd7]Top Talkers (last 24h)[/]", classes="panel-title")
+        self._top_talkers = DataTable(zebra_stripes=True, cursor_type="row", classes="top-talkers")
+        self._table = DataTable(zebra_stripes=True, cursor_type="row", classes="alerts-table")
 
     def compose(self) -> ComposeResult:
         yield self._summary
+        yield self._top_talkers_title
+        yield self._top_talkers
         yield self._table
 
     def on_mount(self) -> None:
+        self._top_talkers.add_columns("Src IP", "Alerts (24h)", "Last Seen")
         self._table.add_columns("Time", "Detector", "Src IP", "Dst IP", "Severity", "Message")
         self.refresh_data()
 
@@ -47,6 +56,18 @@ class SentinelScreen(Container):
             self._summary.update(f"[bold #5fafd7]Detectors (last 60 min)[/]   {parts}")
         else:
             self._summary.update("[bold #5fafd7]Detectors (last 60 min)[/]   [#888888]no alerts in window[/]")
+
+        talkers = self.storage.sentinel_top_talkers(24, 10)
+        self._top_talkers.clear()
+        if not talkers:
+            self._top_talkers.add_row("—", "0", "no alerts in 24h")
+        else:
+            for talker in talkers:
+                self._top_talkers.add_row(
+                    str(talker["src_ip"]),
+                    str(talker["alert_count"]),
+                    str(talker["last_seen"])[11:19],
+                )
 
         # Recent sentinel alerts
         events = [e for e in self.storage.recent_events(limit=50, source="sentinel")

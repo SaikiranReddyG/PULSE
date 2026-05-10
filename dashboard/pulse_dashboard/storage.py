@@ -221,6 +221,31 @@ class Storage:
             ).fetchall()
             return {(r["det"] or "unknown"): r["n"] for r in rows}
 
+    def sentinel_top_talkers(self, hours: int = 24, limit: int = 10) -> list[dict]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT json_extract(payload_json, '$.src_ip') AS src_ip, "
+                "       COUNT(*) AS alert_count, "
+                "       MAX(timestamp) AS last_seen "
+                "FROM events "
+                "WHERE source = 'sentinel' "
+                "  AND event_type = 'sentinel.alert' "
+                "  AND datetime(timestamp) >= datetime('now', ?) "
+                "  AND json_extract(payload_json, '$.src_ip') IS NOT NULL "
+                "GROUP BY src_ip "
+                "ORDER BY alert_count DESC "
+                "LIMIT ?",
+                (f"-{hours} hours", limit),
+            ).fetchall()
+        return [
+            {
+                "src_ip": r["src_ip"],
+                "alert_count": r["alert_count"],
+                "last_seen": r["last_seen"],
+            }
+            for r in rows
+        ]
+
     def netlab_recent_scenarios(self, limit: int = 10) -> list[dict]:
         """Return one row per scenario.started, with completed/aborted status if found."""
         with self._connect() as conn:
