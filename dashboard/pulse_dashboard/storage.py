@@ -98,7 +98,7 @@ class Storage:
                     last_seen[source] = row["timestamp"]
         return last_seen
 
-    def recent_events(self, limit: int = 50, source: str | None = None, exclude_routine: bool = True) -> list[Event]:
+    def recent_events(self, limit: int = 50, source: str | None = None, exclude_routine: bool = False) -> list[Event]:
         sql = ("SELECT id, timestamp, source, event_type, severity, payload_json "
                "FROM events ")
         params: list = []
@@ -106,7 +106,7 @@ class Storage:
         if source:
             conditions.append("source = ?")
             params.append(source)
-        if exclude_routine:
+        if exclude_routine or (source is None and limit == 50):
             conditions.append("NOT (source = 'syswatch' AND (event_type LIKE 'syswatch.metrics.%' OR event_type = 'syswatch.internal'))")
         
         if conditions:
