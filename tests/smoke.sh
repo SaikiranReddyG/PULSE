@@ -45,8 +45,12 @@ done
 
 echo "==== POSTing sample events ===="
 
+# Get the bearer token from .env
+PULSE_RECEIVER_TOKEN=$(grep "^PULSE_RECEIVER_TOKEN=" ../.env | cut -d= -f2)
+
 curl -sf -X POST http://127.0.0.1:8765/events \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}" \
   -d '{
     "schema_version": "1.0",
     "timestamp": "2026-05-01T12:00:00.000+02:00",
@@ -61,6 +65,7 @@ echo
 
 curl -sf -X POST http://127.0.0.1:8765/events \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}" \
   -d '{
     "schema_version": "1.0",
     "timestamp": "2026-05-01T12:00:01.000+02:00",
@@ -75,6 +80,7 @@ echo
 
 curl -sf -X POST http://127.0.0.1:8765/events \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}" \
   -d '{
     "schema_version": "1.0",
     "timestamp": "2026-05-01T12:00:02.000+02:00",
@@ -89,6 +95,7 @@ echo
 
 curl -sf -X POST http://127.0.0.1:8765/events \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}" \
   -d '{
     "schema_version": "1.0",
     "timestamp": "2026-05-01T12:00:03.000+02:00",
@@ -103,6 +110,7 @@ echo
 
 curl -sf -X POST http://127.0.0.1:8765/events \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}" \
   -d '{"schema_version": "1.0"}' | tee /tmp/pulse-smoke-5.json
 echo
 
