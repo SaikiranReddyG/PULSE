@@ -106,8 +106,8 @@ class Storage:
         if source:
             conditions.append("source = ?")
             params.append(source)
-        if exclude_routine or (source is None and limit == 50):
-            conditions.append("NOT (source = 'syswatch' AND (event_type LIKE 'syswatch.metrics.%' OR event_type = 'syswatch.internal'))")
+        if exclude_routine:
+            conditions.append("NOT (source = 'syswatch' AND (event_type LIKE 'syswatch.metrics.%' OR event_type LIKE 'system.metrics.%' OR event_type = 'syswatch.internal'))")
         
         if conditions:
             sql += "WHERE " + " AND ".join(conditions) + " "
@@ -144,7 +144,7 @@ class Storage:
                 "       COUNT(*) AS n "
                 "FROM events "
                 "WHERE datetime(timestamp) >= datetime(?) "
-                "  AND NOT (source = 'syswatch' AND (event_type LIKE 'syswatch.metrics.%' OR event_type = 'syswatch.internal')) "
+                "  AND NOT (source = 'syswatch' AND (event_type LIKE 'syswatch.metrics.%' OR event_type LIKE 'system.metrics.%' OR event_type = 'syswatch.internal')) "
                 "GROUP BY minute "
                 "ORDER BY minute",
                 (cutoff_iso,),
