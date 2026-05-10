@@ -15,6 +15,7 @@
 | `host` | no | string | Hostname of the emitter |
 | `event_type` | yes | string | Dotted namespace, for example `sentinel.alert` |
 | `severity` | yes | string | One of `info`, `low`, `medium`, `high`, `critical` |
+| `event_id` | no | string | If provided, used for idempotency — duplicate event_id values are silently ignored |
 | `payload` | yes | object | Free-form per source |
 
 ## Endpoint Behavior
@@ -23,7 +24,7 @@
 - The receiver returns `{"accepted": N, "rejected": [...]}` with HTTP 200.
 - HTTP 400 is returned only for malformed JSON.
 - Per-event validation errors are reported in the `rejected` array and do not fail the whole batch.
-- Idempotency is not provided in v0.1. Retries may create duplicate rows.
+- Idempotency: if `event_id` is provided, duplicate submissions (same event_id) are silently deduplicated and return accepted: 1, but no database writes occur.
 
 ## Storage And Downstream
 

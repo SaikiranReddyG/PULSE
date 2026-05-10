@@ -56,6 +56,7 @@ class Event(BaseModel):
     host: str | None = None
     event_type: str
     severity: str
+    event_id: str | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -123,13 +124,14 @@ async def post_events(request: Request, _token_verified: None = Depends(check_be
         try:
             if storage is None:
                 raise RuntimeError("storage not initialized")
-            storage.write_event(event.model_dump(), received_at=received_at)
+            written = storage.write_event(event.model_dump(), received_at=received_at)
         except Exception as exc:
             log.exception("storage.write_event failed")
             rejected.append({"index": str(index), "error": f"storage error: {exc}"})
             continue
 
-        if event.severity in {"high", "critical"}:
+        # Only alert if the event was actually written (not a duplicate)
+        if written and event.severity in {"high", "critical"}:
             maybe_alert_discord(event.model_dump())
 
         accepted += 1

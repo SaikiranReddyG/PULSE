@@ -43,7 +43,6 @@ def _valid_event(severity: str = "info", source: str = "sentinel") -> dict[str, 
 
 
 def _auth_headers(token: str = "test-token-123") -> dict[str, str]:
-    """Helper to create Authorization header."""
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -101,23 +100,64 @@ def test_partial_batch_success(client: TestClient) -> None:
 
 
 def test_post_events_no_token(client: TestClient) -> None:
-    """Test that POST /events rejects request with no Authorization header."""
     response = client.post("/events", json=_valid_event())
     assert response.status_code == 401
     assert response.json() == {"detail": "unauthorized"}
 
 
 def test_post_events_wrong_token(client: TestClient) -> None:
-    """Test that POST /events rejects request with wrong bearer token."""
     response = client.post("/events", json=_valid_event(), headers=_auth_headers("wrong-token"))
     assert response.status_code == 401
     assert response.json() == {"detail": "unauthorized"}
 
 
 def test_post_events_correct_token(client: TestClient) -> None:
-    """Test that POST /events accepts request with correct bearer token."""
     response = client.post("/events", json=_valid_event(), headers=_auth_headers("test-token-123"))
     assert response.status_code == 200
     body = response.json()
     assert body["accepted"] == 1
     assert body["rejected"] == []
+
+
+def test_idempotent_event_accepted_once(client: TestClient) -> None:
+    event = {
+        "schema_version": "1.0",
+        "timestamp": "2026-05-01T12:00:00.000+02:00",
+        "source": "sentinel",
+        "source_version": "0.1.0",
+        "host": "test-host",
+        "event_type": "sentinel.lifecycle.started",
+        "severity": "info",
+        "event_id": "unique-event-123",
+        "payload": {"interface": "lo"},
+    }
+    response1 = client.post("/events", json=event, headers=_auth_headers())
+    assert response1.status_code == 200
+    assert response1.json()["accepted"] == 1
+
+    response2 = client.post("/events", json=event, headers=_auth_headers())
+    assert response2.status_code == 200
+    assert response2.json()["accepted"] == 1
+
+    from receiver.app import storage
+    cursor = storage._conn.execute(
+        "SELECT COUNT(*) FROM events WHERE event_id = ?", ("unique-event-123",)
+    )
+    assert cursor.fetchone()[0] == 1
+
+
+def test_event_without_id_not_deduplicated(client: TestClient) -> None:
+    event = _valid_event()
+    response1 = client.post("/events", json=event, headers=_auth_headers())
+    assert response1.status_code == 200
+    assert response1.json()["accepted"] == 1
+
+    response2 = client.post("/events", json=event, headers=_auth_headers())
+    assert response2.status_code == 200
+    assert response2.json()["accepted"] == 1
+
+    from receiver.app import storage
+    cursor = storage._conn.execute(
+        "SELECT COUNT(*) FROM events WHERE source = ? AND host = ?", ("sentinel", "test-host")
+    )
+    assert cursor.fetchone()[0] == 2
