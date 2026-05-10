@@ -85,6 +85,19 @@ class Storage:
             ).fetchall()
             return {r["source"]: r["n"] for r in rows}
 
+    def last_seen_by_source(self) -> dict[str, str | None]:
+        sources = ("sentinel", "syswatch", "netlab")
+        last_seen = {source: None for source in sources}
+        with self._connect() as conn:
+            for source in sources:
+                row = conn.execute(
+                    "SELECT timestamp FROM events WHERE source = ? ORDER BY datetime(timestamp) DESC, id DESC LIMIT 1",
+                    (source,),
+                ).fetchone()
+                if row:
+                    last_seen[source] = row["timestamp"]
+        return last_seen
+
     def recent_events(self, limit: int = 50, source: str | None = None, exclude_routine: bool = False) -> list[Event]:
         sql = ("SELECT id, timestamp, source, event_type, severity, payload_json "
                "FROM events ")

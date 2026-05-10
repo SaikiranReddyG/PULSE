@@ -1,5 +1,7 @@
 """Unit tests for the storage layer."""
 
+import sqlite3
+
 import pytest
 
 
@@ -61,3 +63,19 @@ def test_netlab_recent_scenarios(storage):
     scenarios = storage.netlab_recent_scenarios(limit=10)
     assert len(scenarios) >= 1
     assert scenarios[0]["scenario"] == "arp_spoof"
+
+
+def test_last_seen_by_source(storage):
+    with sqlite3.connect(storage.db_path) as conn:
+        known_timestamp = conn.execute(
+            "SELECT timestamp FROM events WHERE source = ? LIMIT 1",
+            ("sentinel",),
+        ).fetchone()[0]
+
+        conn.execute("DELETE FROM events WHERE source = ?", ("netlab",))
+        conn.commit()
+
+    last_seen = storage.last_seen_by_source()
+    assert last_seen["sentinel"] == known_timestamp
+    assert last_seen["syswatch"] == known_timestamp
+    assert last_seen["netlab"] is None
