@@ -32,6 +32,7 @@
 - Events are also `XADD`-ed to a Redis Stream named `pulse:events:<source>`.
 - Redis failures are best effort and do not block SQLite writes.
 - Events with `severity` in `{high, critical}` trigger a Discord webhook when configured.
+- Events older than PULSE_RETENTION_DAYS days are automatically deleted (default: 30 days, 0 = disabled).
 
 ## What This Is Not
 

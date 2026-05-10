@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
 import secrets
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timezone
 from typing import Any
 
@@ -20,6 +22,13 @@ log = logging.getLogger("receiver")
 
 VALID_SEVERITIES = {"info", "low", "medium", "high", "critical"}
 VALID_SOURCES = {"sentinel", "netlab", "syswatch"}
+
+
+def _get_retention_days() -> int:
+    raw_value = os.environ.get("PULSE_RETENTION_DAYS", "")
+    if raw_value == "":
+        return 30
+    return int(raw_value)
 
 
 def check_bearer_token(request: Request) -> None:
@@ -60,13 +69,29 @@ class Event(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
-app = FastAPI(title="pulse-platform receiver", version="0.1.0")
 storage: Storage | None = None
+retention_task: asyncio.Task[None] | None = None
 
 
-@app.on_event("startup")
-def on_startup() -> None:
+async def _retention_loop(days: int) -> None:
+    while True:
+        try:
+            if storage is None:
+                raise RuntimeError("storage not initialized")
+            deleted = await asyncio.to_thread(storage.delete_old_events, days)
+            log.info("retention: deleted %d events older than %d days", deleted, days)
+            await asyncio.sleep(86400)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("retention job failed")
+            await asyncio.sleep(86400)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global storage
+    global retention_task
     storage = Storage(
         sqlite_path=os.environ.get("PULSE_SQLITE_DB", "/data/pulse.db"),
         redis_host=os.environ.get("REDIS_HOST", "redis"),
@@ -79,12 +104,24 @@ def on_startup() -> None:
         storage.redis_host,
         storage.redis_port,
     )
+    retention_days = _get_retention_days()
+    retention_task = None
+    if retention_days > 0:
+        retention_task = asyncio.create_task(_retention_loop(retention_days))
+
+    try:
+        yield
+    finally:
+        if retention_task is not None:
+            retention_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await retention_task
+        if storage is not None:
+            storage.close()
+            storage = None
 
 
-@app.on_event("shutdown")
-def on_shutdown() -> None:
-    if storage is not None:
-        storage.close()
+app = FastAPI(title="pulse-platform receiver", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")

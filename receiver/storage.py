@@ -80,6 +80,18 @@ class Storage:
             self._write_redis_stream(event)
         return written
 
+    def delete_old_events(self, days: int) -> int:
+        """Delete events older than the PULSE_RETENTION_DAYS retention window."""
+        if days == 0:
+            return 0
+
+        cursor = self._conn.execute(
+            "DELETE FROM events WHERE datetime(timestamp) < datetime('now', ?)",
+            (f"-{days} days",),
+        )
+        self._conn.commit()
+        return cursor.rowcount
+
     def _write_sqlite(self, event: dict[str, Any], received_at: str) -> bool:
         """Insert event into SQLite using INSERT OR IGNORE for deduplication. Return True if row was written."""
         cursor = self._conn.execute(
