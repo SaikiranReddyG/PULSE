@@ -21,6 +21,7 @@ os.environ.setdefault("DISCORD_WEBHOOK_URL", "")
 os.environ.setdefault("PULSE_RECEIVER_TOKEN", "test-token-123")
 
 from receiver.app import app  # noqa: E402
+from receiver.storage import Storage  # noqa: E402
 
 
 @pytest.fixture()
@@ -161,3 +162,45 @@ def test_event_without_id_not_deduplicated(client: TestClient) -> None:
         "SELECT COUNT(*) FROM events WHERE source = ? AND host = ?", ("sentinel", "test-host")
     )
     assert cursor.fetchone()[0] == 2
+
+
+def test_delete_old_events() -> None:
+    storage = Storage(sqlite_path=":memory:", redis_host="localhost", redis_port=6379, redis_password="")
+
+    storage._conn.execute(
+        "INSERT INTO events (event_id, received_at, timestamp, schema_version, source, source_version, host, event_type, severity, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            None,
+            "2026-03-01T00:00:00.000+00:00",
+            "2026-03-01T00:00:00.000+00:00",
+            "1.0",
+            "sentinel",
+            "0.1.0",
+            "old-host",
+            "sentinel.lifecycle.started",
+            "info",
+            "{}",
+        ),
+    )
+    storage._conn.execute(
+        "INSERT INTO events (event_id, received_at, timestamp, schema_version, source, source_version, host, event_type, severity, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            None,
+            "2026-05-01T00:00:00.000+00:00",
+            "2026-05-01T00:00:00.000+00:00",
+            "1.0",
+            "sentinel",
+            "0.1.0",
+            "recent-host",
+            "sentinel.lifecycle.started",
+            "info",
+            "{}",
+        ),
+    )
+    storage._conn.commit()
+
+    deleted = storage.delete_old_events(30)
+    assert deleted == 1
+
+    cursor = storage._conn.execute("SELECT host FROM events ORDER BY host")
+    assert [row[0] for row in cursor.fetchall()] == ["recent-host"]
