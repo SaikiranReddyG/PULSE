@@ -98,7 +98,7 @@ class Storage:
                     last_seen[source] = row["timestamp"]
         return last_seen
 
-    def recent_events(self, limit: int = 50, source: str | None = None, exclude_routine: bool = False) -> list[Event]:
+    def recent_events(self, limit: int = 50, source: str | None = None, exclude_routine: bool = True) -> list[Event]:
         sql = ("SELECT id, timestamp, source, event_type, severity, payload_json "
                "FROM events ")
         params: list = []
