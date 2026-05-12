@@ -5,9 +5,10 @@ from __future__ import annotations
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
 from textual.widgets import Static, DataTable
+from rich.text import Text
 
 from pulse_dashboard.storage import Storage
-from pulse_dashboard.theme import SEVERITY_COLOR
+from pulse_dashboard.theme import SEVERITY_COLOR, TEXT_MUTED
 
 
 class SentinelScreen(Container):
@@ -63,8 +64,12 @@ class SentinelScreen(Container):
             self._top_talkers.add_row("—", "0", "no alerts in 24h")
         else:
             for talker in talkers:
+                src_ip = str(talker["src_ip"])
+                src_display = Text(src_ip)
+                if self.storage.is_trusted_src_ip(src_ip):
+                    src_display.append(" [internal]", style=TEXT_MUTED)
                 self._top_talkers.add_row(
-                    str(talker["src_ip"]),
+                    src_display,
                     str(talker["alert_count"]),
                     str(talker["last_seen"])[11:19],
                 )
