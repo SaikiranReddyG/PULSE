@@ -194,11 +194,19 @@ class Storage:
         )
 
     def syswatch_latest_metrics(self) -> dict[str, Event | None]:
+        def latest_for_prefixes(metric_name: str) -> Event | None:
+            newest: Event | None = None
+            for prefix in (f"syswatch.metrics.{metric_name}", f"system.metrics.{metric_name}"):
+                event = self.latest_event_by_type("syswatch", prefix)
+                if event and (newest is None or event.id > newest.id):
+                    newest = event
+            return newest
+
         return {
-            "cpu": self.latest_event_by_type("syswatch", "syswatch.metrics.cpu"),
-            "memory": self.latest_event_by_type("syswatch", "syswatch.metrics.memory"),
-            "disk": self.latest_event_by_type("syswatch", "syswatch.metrics.disk"),
-            "network": self.latest_event_by_type("syswatch", "syswatch.metrics.network"),
+            "cpu": latest_for_prefixes("cpu"),
+            "memory": latest_for_prefixes("memory"),
+            "disk": latest_for_prefixes("disk"),
+            "network": latest_for_prefixes("network"),
         }
 
     def syswatch_recent_signals(self, limit: int = 10) -> list[Event]:
@@ -206,7 +214,10 @@ class Storage:
             "SELECT id, timestamp, source, event_type, severity, payload_json "
             "FROM events "
             "WHERE source = 'syswatch' "
-            "  AND (event_type LIKE 'syswatch.anomaly%' OR event_type LIKE 'syswatch.lifecycle%') "
+            "  AND ("
+            "event_type LIKE 'syswatch.anomaly%' OR event_type LIKE 'system.anomaly%' OR "
+            "event_type LIKE 'syswatch.lifecycle%' OR event_type LIKE 'system.lifecycle%'"
+            ") "
             "ORDER BY id DESC LIMIT ?"
         )
         with self._connect() as conn:
