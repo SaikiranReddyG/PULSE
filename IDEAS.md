@@ -13,12 +13,18 @@
 
 ## Stack additions (deferred to v0.3+)
 
-- n8n workflow orchestration: rebuild workflows against the receiver's HTTP API. The old MQTT-based workflows in `exports/` were deleted with the bus.
 - Mosquitto MQTT bus, only if tools ever need fleet or multi-host comms.
 - Threat intel enrichment: `load_intel.py` and `threat-intel/intel.yaml` were deleted in v0.1; rebuild as a sidecar service that reads from events and writes enriched rows.
 - Prometheus exporter for stack metrics such as events per second and Redis stream depth.
 - Loki for log aggregation across stack services.
 - Wazuh-style HIDS alerting integration.
+## Receiver improvements
+
+- Idempotency keys to deduplicate retries.
+- Bearer token auth for `/events` in non-localhost deployments.
+- Rate limiting per source.
+- Schema version negotiation so tools can discover supported schema versions at startup.
+- Batched Redis `XADD`.
 
 ## Receiver improvements
 

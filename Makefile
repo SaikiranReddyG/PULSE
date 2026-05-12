@@ -42,4 +42,4 @@ dashboard:
 clean:
 	$(DOCKER_COMPOSE) down -v
 	rm -rf sqlite/pulse.db sqlite/pulse.db-journal sqlite/pulse.db-wal sqlite/pulse.db-shm
-	rm -rf redis-data n8n-data
+	rm -rf redis-data

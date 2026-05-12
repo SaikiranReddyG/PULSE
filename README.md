@@ -6,13 +6,13 @@ It is not a multi-host SIEM, not a managed service, and not a fleet manager. It 
 
 ## Services
 
-The stack is three containers (plus optional n8n):
+The stack is three containers:
 
 | Service | Purpose |
 |---|---|
 | `receiver` | HTTP API that accepts contract events, validates them, writes SQLite, and fans out to Redis Streams and Discord alerts |
 | `redis` | Live event tail via Redis Streams |
-| `n8n` | Optional profile for future workflow automation |
+
 
 The dashboard runs locally as a terminal application and reads SQLite directly in read-only mode.
 

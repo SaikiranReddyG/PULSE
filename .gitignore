@@ -1,6 +1,5 @@
 redis-data/
 grafana-data/
-n8n-data/
 dashboard/.venv/
 dashboard/*.egg-info/
 dashboard/__pycache__/

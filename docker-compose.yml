@@ -68,26 +68,6 @@ services:
       timeout: 5s
       retries: 3
 
-  n8n:
-    image: n8nio/n8n:1.76.1
-    container_name: pulse-n8n
-    restart: unless-stopped
-    profiles:
-      - n8n
-    ports:
-      - "127.0.0.1:${PULSE_N8N_PORT}:5678"
-    environment:
-      N8N_DIAGNOSTICS_ENABLED: "false"
-      GENERIC_TIMEZONE: Europe/Paris
-      TZ: Europe/Paris
-    volumes:
-      - ./n8n-data:/home/node/.n8n
-    depends_on:
-      receiver:
-        condition: service_started
-    networks:
-      - pulse-net
-
 networks:
   pulse-net:
     driver: bridge
