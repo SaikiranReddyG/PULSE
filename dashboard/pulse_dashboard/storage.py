@@ -7,7 +7,9 @@ reads without blocking writes.
 
 from __future__ import annotations
 
+import ipaddress
 import json
+import os
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -28,6 +30,26 @@ class Storage:
     def __init__(self, db_path: str):
         self.db_path = db_path
         self._uri = f"file:{db_path}?mode=ro"
+        self._trusted_networks = self._load_trusted_networks()
+
+    @staticmethod
+    def _load_trusted_networks() -> list:
+        raw = os.environ.get("PULSE_TRUSTED_NETWORKS", "")
+        networks = []
+        for cidr in raw.split(","):
+            cidr = cidr.strip()
+            if cidr:
+                networks.append(ipaddress.ip_network(cidr, strict=False))
+        return networks
+
+    def is_trusted_src_ip(self, src_ip: str | None) -> bool:
+        if not src_ip:
+            return False
+        try:
+            address = ipaddress.ip_address(src_ip)
+        except ValueError:
+            return False
+        return any(address in network for network in self._trusted_networks)
 
     def _connect(self) -> sqlite3.Connection:
         # Re-open per call. SQLite connections are cheap; avoids stale handles.
