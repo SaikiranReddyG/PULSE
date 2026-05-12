@@ -68,6 +68,33 @@ services:
       timeout: 5s
       retries: 3
 
+  pulse-alert-worker:
+    build: ./workers
+    command: ["python", "-m", "workers.alert_worker"]
+    depends_on: [redis, receiver]
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${PULSE_REDIS_PASS}
+      - PULSE_DISCORD_WEBHOOK=${PULSE_DISCORD_WEBHOOK}
+      - PULSE_DB_PATH=/data/pulse.db
+    volumes:
+      - ./sqlite:/data
+      - ./config:/app/config
+    restart: unless-stopped
+
+  pulse-digest-worker:
+    build: ./workers
+    command: ["python", "-m", "workers.digest_worker"]
+    depends_on: [receiver]
+    environment:
+      - PULSE_DISCORD_WEBHOOK=${PULSE_DISCORD_WEBHOOK}
+      - PULSE_DB_PATH=/data/pulse.db
+    volumes:
+      - ./sqlite:/data
+      - ./config:/app/config
+    restart: unless-stopped
+
 networks:
   pulse-net:
     driver: bridge
