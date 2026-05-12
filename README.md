@@ -1,118 +1,53 @@
-# pulse-platform
+# See Everything. Respond Faster.
 
-`pulse-platform` is a single-host SOC integration stack. It receives pulse-contract JSON events from three sibling tools, `sentinel` (network IDS), `netlab` (attack/defense lab), and `syswatch` (system monitor), then persists, alerts on, and visualizes those events.
+**PULSE turns security events from all your local tools into one unified, live dashboard.**
 
-It is not a multi-host SIEM, not a managed service, and not a fleet manager. It runs on one Linux box. The security tools themselves live in separate repos and emit events to this platform's HTTP receiver.
+---
 
-## Services
+## The Problem
 
-The stack is three containers:
+Your security team is running multiple detection tools—network monitoring, attack labs, system audits—but they're working in silos. Security events scatter across different outputs, making it hard to spot patterns, respond quickly, or even know what's happening right now. You need visibility, not a spreadsheet of disconnected alerts.
 
-| Service | Purpose |
-|---|---|
-| `receiver` | HTTP API that accepts contract events, validates them, writes SQLite, and fans out to Redis Streams and Discord alerts |
-| `redis` | Live event tail via Redis Streams |
+---
 
+## What It Does
 
-The dashboard runs locally as a terminal application and reads SQLite directly in read-only mode.
+### 🔄 One Place for All Events
+PULSE collects security events from your network monitors, attack labs, and system monitors in real-time. No more juggling separate terminals. They all flow into a single, searchable database.
 
-## Quick Start
+### 📊 Live Event Dashboard
+A terminal-native TUI shows what's happening now. Drill into specific incidents without leaving the command line. Tabs organize events by source. Refresh is instant.
 
-```bash
-git clone <repo-url> pulse-platform && cd pulse-platform
-cp .env.example .env
-# edit .env to set passwords and (optionally) DISCORD_WEBHOOK_URL
-make up
+### 🚨 Instant Alerts (Optional)
+High and critical events trigger Discord notifications. Alert your team the moment something matters.
 
-# Verify the receiver is up
-curl http://127.0.0.1:8765/health
-# → {"status":"ok"}
+### 📦 Lightweight. Single-Host.
+No distributed infrastructure to manage. Runs on one Linux box. Simple architecture means simple troubleshooting.
 
-# In another terminal, launch the dashboard
-cd dashboard
-python3 -m venv .venv
-.venv/bin/pip install -e .
-pulse-dashboard
-# or simply: make dashboard (from the root directory)
+---
 
-# Stop
-make down
-```
+## Who It's For
 
-## How Tools Connect
+- **Security defenders** running multiple open-source security tools locally who need a command center
+- **Red teamers and attack sim ops** who want to correlate defensive signals during lab work
+- **DevOps / sys admins** using network IDS, system monitors, or attack frameworks who need real-time visibility
 
-Each pulse tool supports an `http_post` output destination. Point it at the receiver endpoint with bearer token authentication:
+---
 
-```bash
-# Set PULSE_RECEIVER_TOKEN to match the value in .env
-export PULSE_RECEIVER_TOKEN="changeme-receiver-token"
+## Get Started
 
-sudo sentinel run -i wlo1 --output http_post --output-url http://127.0.0.1:8765/events --auth-header "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}"
-sudo netlab run arp_spoof --output http_post --output-url http://127.0.0.1:8765/events --auth-header "Authorization: Bearer ${PULSE_RECEIVER_TOKEN}"
-syswatch --config syswatch.yaml  # configure http_post in syswatch.yaml with Authorization: Bearer header
-```
+PULSE works in three steps:
 
-## Architecture
+1. **Receive** — Launch the PULSE stack on a Linux box (receiver, database, streaming)
+2. **Connect** — Point your security tools to the PULSE event endpoint
+3. **View** — Open the live dashboard and start seeing events in real-time
 
-```text
-┌───────────┐   ┌───────────┐   ┌───────────┐
-│ sentinel  │   │  netlab   │   │ syswatch  │
-└─────┬─────┘   └─────┬─────┘   └─────┬─────┘
-      │ HTTP POST     │ HTTP POST     │ HTTP POST
-      └───────────────┼───────────────┘
-                      ▼
-               ┌──────────────┐
-               │   receiver   │  validates, persists, fans out
-               └──┬────────┬──┘
-                  │        │
-           ┌──────▼──┐  ┌──▼──────┐
-           │ SQLite  │  │ Redis   │
-           │ (cold)  │  │ (hot)   │
-           └────┬────┘  └─────────┘
-                ▼
-        pulse-dashboard
-        (Textual TUI terminal app)
-        reads SQLite directly
-
-Optional: Discord webhook on high/critical events
-```
-
-## Configuration
-
-Copy `.env.example` to `.env` and edit the passwords and any optional alerting settings. The receiver and Redis ports are localhost-only by default.
-
-## Dashboard
-
-The dashboard is a terminal-native tool built with Textual. It reads the SQLite database directly in read-only mode (no writes possible—safe to run concurrently).
-
-See [dashboard/README.md](dashboard/README.md) for installation and usage details.
-
-```bash
-make dashboard
-```
-
-Press `q` to quit, `r` to force refresh, `1-4` to switch tabs (Overview, Syswatch, Sentinel, Netlab).
-
-## Smoke Test
-
-```bash
-make smoke
-```
-
-## Troubleshooting
-
-- Receiver returns 422: the event is missing a required field; check `CONTRACT.md`.
-- Dashboard says "database unavailable": ensure `make up` ran successfully and `sqlite3 sqlite/pulse.db ".tables"` shows `events`.
-- Dashboard queries return no data: check that the stack is running and events have been sent. The SQLite file is read-only from the dashboard; the receiver writes to it.
-- Discord alerts are not firing: check `DISCORD_WEBHOOK_URL` in `.env` and receiver logs via `make logs`.
-- Remote access to the dashboard: the dashboard is a terminal app and runs on your local machine. To view it remotely, SSH into the box and run `pulse-dashboard` in the SSH terminal.
-
-## Related Repos
-
-- `sentinel` - network IDS
-- `netlab` - attack/defense lab
-- `syswatch` - system monitor
+---
 
 ## License
 
-MIT. See `LICENSE`.
+[See LICENSE file](./LICENSE)
+
+---
+
+**Ready to see your security events in one place?** [Set it up now.](#get-started)
