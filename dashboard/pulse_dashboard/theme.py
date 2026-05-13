@@ -1,24 +1,14 @@
 """Color palette and theme constants."""
 
-BG = "#1a1a1a"
-SURFACE = "#222222"
-BORDER = "#333333"
-TEXT = "#e8e8e8"
 TEXT_MUTED = "#888888"
 ACCENT = "#5fafd7"
 
-SEVERITY_INFO = "#888888"
-SEVERITY_LOW = "#5fafd7"
-SEVERITY_MEDIUM = "#d7af5f"
-SEVERITY_HIGH = "#d77a5f"
-SEVERITY_CRITICAL = "#d75f5f"
-
 SEVERITY_COLOR = {
-    "info": SEVERITY_INFO,
-    "low": SEVERITY_LOW,
-    "medium": SEVERITY_MEDIUM,
-    "high": SEVERITY_HIGH,
-    "critical": SEVERITY_CRITICAL,
+    "info": "#888888",
+    "low": "#5fafd7",
+    "medium": "#d7af5f",
+    "high": "#d77a5f",
+    "critical": "#d75f5f",
 }
 
 SOURCE_COLOR = {

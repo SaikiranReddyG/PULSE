@@ -32,7 +32,7 @@ class SeverityBar(Container):
             return
         order = ["info", "low", "medium", "high", "critical"]
         lines = ["[bold #5fafd7]Severity (last 60m)[/]"]
-        max_n = max(counts.values()) if counts else 1
+        max_n = max(counts.values())
         for sev in order:
             n = counts.get(sev, 0)
             color = SEVERITY_COLOR.get(sev, "#e8e8e8")

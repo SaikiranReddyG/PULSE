@@ -32,28 +32,13 @@ def _get_retention_days() -> int:
 
 
 def check_bearer_token(request: Request) -> None:
-    """Dependency function to check bearer token authentication.
-    
-    Reads PULSE_RECEIVER_TOKEN from environment. If set, requires requests to include
-    Authorization: Bearer <token> header. If not set (or empty), rejects all requests.
-    
-    Raises HTTPException(401, {"detail": "unauthorized"}) if token is missing, wrong, or empty.
-    """
     token_from_env = os.environ.get("PULSE_RECEIVER_TOKEN", "")
-    
-    # If env var is not set or empty, reject all requests
     if not token_from_env:
-        raise HTTPException(status_code=401, detail="unauthorized")    
-    # Get Authorization header
+        raise HTTPException(status_code=401, detail="unauthorized")
     auth_header = request.headers.get("Authorization", "")
-    
-    # Parse and validate Bearer token
     if not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="unauthorized")
-    
-    token_from_header = auth_header[7:]  # Remove "Bearer " prefix
-    
-    # Use secrets.compare_digest to prevent timing attacks
+    token_from_header = auth_header[7:]
     if not secrets.compare_digest(token_from_header, token_from_env):
         raise HTTPException(status_code=401, detail="unauthorized")
 
@@ -167,7 +152,6 @@ async def post_events(request: Request, _token_verified: None = Depends(check_be
             rejected.append({"index": str(index), "error": f"storage error: {exc}"})
             continue
 
-        # Only alert if the event was actually written (not a duplicate)
         if written and event.severity in {"high", "critical"}:
             maybe_alert_discord(event.model_dump())
 

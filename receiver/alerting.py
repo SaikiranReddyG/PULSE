@@ -11,11 +11,8 @@ import requests
 log = logging.getLogger("receiver.alerting")
 
 _SEVERITY_COLOR = {
-    "low": 0x3498DB,
-    "medium": 0xF1C40F,
     "high": 0xE67E22,
     "critical": 0xE74C3C,
-    "info": 0x95A5A6,
 }
 
 

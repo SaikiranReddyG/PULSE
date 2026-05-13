@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal
+from textual.containers import Container
 from textual.widgets import Static
 
 from pulse_dashboard.storage import Storage
