@@ -31,7 +31,7 @@ class SourceBar(Container):
             self._content.update("[bold #5fafd7]Source (last 60m)[/]\n  [#888888]no events[/]")
             return
         lines = ["[bold #5fafd7]Source (last 60m)[/]"]
-        max_n = max(counts.values()) if counts else 1
+        max_n = max(counts.values())
         for source, n in sorted(counts.items()):
             color = SOURCE_COLOR.get(source, "#e8e8e8")
             bar_width = int((n / max_n) * 20) if max_n else 0

@@ -1,5 +1,6 @@
 """Entry point for the pulse-dashboard console script."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -7,7 +8,6 @@ from pulse_dashboard.app import PulseDashboardApp
 
 
 def _default_db_path() -> str:
-    import os
     env = os.environ.get("PULSE_DB")
     if env:
         return env

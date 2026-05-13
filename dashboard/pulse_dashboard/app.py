@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container
 from textual.widgets import Footer, Header, TabbedContent, TabPane, Static
 
 from pulse_dashboard.storage import Storage
