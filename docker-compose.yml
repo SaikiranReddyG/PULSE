@@ -1,3 +1,5 @@
+name: pulse-platform
+
 # ============================================================================
 # pulse-platform — single-host SOC integration stack
 # ============================================================================
@@ -15,7 +17,6 @@ services:
     build:
       context: ./receiver
       dockerfile: Dockerfile
-    container_name: pulse-receiver
     restart: unless-stopped
     ports:
       - "127.0.0.1:${PULSE_RECEIVER_PORT}:${PULSE_RECEIVER_PORT}"
@@ -26,7 +27,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${PULSE_REDIS_PASS}
-      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      PULSE_DISCORD_WEBHOOK: ${PULSE_DISCORD_WEBHOOK}
       PULSE_RECEIVER_TOKEN: ${PULSE_RECEIVER_TOKEN}
     volumes:
       - ./sqlite:/data
@@ -43,7 +44,6 @@ services:
 
   redis:
     image: redis:7.4-alpine
-    container_name: pulse-redis
     restart: unless-stopped
     ports:
       - "127.0.0.1:${PULSE_REDIS_PORT}:6379"
@@ -67,6 +67,41 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+  pulse-alert-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    command: ["python", "-m", "workers.alert_worker"]
+    depends_on: [redis, receiver]
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${PULSE_REDIS_PASS}
+      - PULSE_DISCORD_WEBHOOK=${PULSE_DISCORD_WEBHOOK}
+      - PULSE_DB_PATH=/data/pulse.db
+    volumes:
+      - ./sqlite:/data
+      - ./config:/app/config
+    restart: unless-stopped
+    networks:
+      - pulse-net
+
+  pulse-digest-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    command: ["python", "-m", "workers.digest_worker"]
+    depends_on: [receiver]
+    environment:
+      - PULSE_DISCORD_WEBHOOK=${PULSE_DISCORD_WEBHOOK}
+      - PULSE_DB_PATH=/data/pulse.db
+    volumes:
+      - ./sqlite:/data
+      - ./config:/app/config
+    restart: unless-stopped
+    networks:
+      - pulse-net
 
 networks:
   pulse-net:

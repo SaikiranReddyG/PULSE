@@ -1,0 +1,33 @@
+discord:
+  webhook_url: "${PULSE_DISCORD_WEBHOOK}"
+
+digest:
+  send_time: "23:00"
+
+thresholds:
+  memory_percent: 90
+  disk_percent: 95
+  cpu_sustained_percent: 85
+  cpu_sustained_minutes: 10
+
+alert_tiers:
+  critical:
+    - event_type: "sentinel.alert"
+      severity: ["critical", "high"]
+    - metric: "disk_percent"
+      above: 95
+  warning:
+    - event_type: "sentinel.alert"
+      severity: ["medium"]
+    - metric: "memory_percent"
+      above: 90
+    - metric: "cpu_sustained_percent"
+      above: 85
+  info:
+    - event_type: "sentinel.alert"
+      severity: ["low"]
+    - event_type: "sentinel.lifecycle.started"
+    - event_type: "sentinel.lifecycle.stopped"
+
+throttle:
+  warning_cooldown_minutes: 60
