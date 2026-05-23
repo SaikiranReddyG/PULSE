@@ -17,7 +17,7 @@ os.environ.setdefault("PULSE_SQLITE_DB", ":memory:")
 os.environ.setdefault("REDIS_HOST", "localhost")
 os.environ.setdefault("REDIS_PORT", "6379")
 os.environ.setdefault("REDIS_PASSWORD", "")
-os.environ.setdefault("DISCORD_WEBHOOK_URL", "")
+os.environ.setdefault("PULSE_DISCORD_WEBHOOK", "")
 os.environ.setdefault("PULSE_RECEIVER_TOKEN", "test-token-123")
 
 from receiver.app import app  # noqa: E402
