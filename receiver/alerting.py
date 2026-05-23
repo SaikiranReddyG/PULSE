@@ -21,7 +21,7 @@ _SEVERITY_COLOR = {
 
 def maybe_alert_discord(event: dict[str, Any]) -> None:
     """Fire a Discord webhook for high/critical events. No-op if not configured."""
-    webhook = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+    webhook = os.environ.get("PULSE_DISCORD_WEBHOOK", "").strip()
     if not webhook:
         return
 
