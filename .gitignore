@@ -19,3 +19,9 @@ __pycache__/
 .pytest_cache/
 dist/
 build/sqlite/*.bak.*
+
+# Local personal scratch files and launch helpers.
+/pulse-commands
+/systemd/PHASE_2_REPORT.md
+/systemd/pulse-platform.service
+/tmux/
