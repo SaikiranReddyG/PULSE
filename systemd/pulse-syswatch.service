@@ -1,0 +1,19 @@
+[Unit]
+Description=Pulse sensor — syswatch system monitor
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=reddy
+WorkingDirectory=/home/reddy/codex-workspace/syswatch
+EnvironmentFile=/home/reddy/codex-workspace/codex-platform/systemd/pulse-sensors.env
+ExecStart=/home/reddy/codex-workspace/syswatch/syswatch --config webui/syswatch-webui.yaml -n 0
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pulse-syswatch
+
+[Install]
+WantedBy=multi-user.target
