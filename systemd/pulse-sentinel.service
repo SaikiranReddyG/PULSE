@@ -1,0 +1,19 @@
+[Unit]
+Description=Pulse sensor — sentinel network IDS
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/reddy/codex-workspace/sentinel
+EnvironmentFile=/home/reddy/codex-workspace/codex-platform/systemd/pulse-sensors.env
+ExecStart=/home/reddy/codex-workspace/sentinel/.venv/bin/sentinel run -c /home/reddy/codex-workspace/sentinel/config/pulse.yaml
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pulse-sentinel
+
+[Install]
+WantedBy=multi-user.target
