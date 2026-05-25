@@ -24,4 +24,3 @@ build/sqlite/*.bak.*
 /pulse-commands
 /systemd/PHASE_2_REPORT.md
 /systemd/pulse-platform.service
-/tmux/
